@@ -20,7 +20,7 @@ export default async function handler(req: Request): Promise<Response> {
 
   const apiKey = process.env.VIRUSTOTAL_API_KEY;
   if (!apiKey) {
-    return new Response(JSON.stringify({ error: 'Server misconfiguration: API key not set' }), {
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });

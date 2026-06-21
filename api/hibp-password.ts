@@ -45,6 +45,13 @@ export default async function handler(req: Request): Promise<Response> {
       headers: { 'Add-Padding': 'true' },
     });
 
+    if (res.status === 429) {
+      return new Response(JSON.stringify({ pwned: false, count: 0, errorMessage: 'Service temporarily unavailable — try again in a moment' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
+      });
+    }
+
     if (!res.ok) {
       return new Response(JSON.stringify({ pwned: false, count: 0, errorMessage: 'Check failed' }), {
         status: 200,

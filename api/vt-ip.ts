@@ -13,7 +13,7 @@ export default async function handler(req: Request): Promise<Response> {
 
   const apiKey = process.env.VIRUSTOTAL_API_KEY;
   if (!apiKey) {
-    return new Response(JSON.stringify({ error: 'Server misconfiguration: API key not set' }), {
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
@@ -45,8 +45,12 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   const trimmedIp = ip.trim();
-  const isIPv4 = /^\d{1,3}(\.\d{1,3}){3}$/.test(trimmedIp);
-  const isIPv6 = /^[0-9a-fA-F:]{2,39}$/.test(trimmedIp);
+  const isIPv4 = /^(\d{1,3}\.){3}\d{1,3}$/.test(trimmedIp) &&
+    trimmedIp.split('.').every((o) => parseInt(o, 10) <= 255);
+  const isIPv6 = trimmedIp.includes(':') &&
+    /^[0-9a-fA-F:]{2,39}$/.test(trimmedIp) &&
+    !/:{3,}/.test(trimmedIp) &&
+    trimmedIp.split(':').every((g) => g.length <= 4);
   if (!isIPv4 && !isIPv6) {
     return new Response(JSON.stringify({ error: 'Invalid IP address format' }), {
       status: 400,

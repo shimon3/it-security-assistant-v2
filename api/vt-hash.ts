@@ -13,7 +13,7 @@ export default async function handler(req: Request): Promise<Response> {
 
   const apiKey = process.env.VIRUSTOTAL_API_KEY;
   if (!apiKey) {
-    return new Response(JSON.stringify({ error: 'Server misconfiguration: API key not set' }), {
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
@@ -37,8 +37,16 @@ export default async function handler(req: Request): Promise<Response> {
     });
   }
 
+  const cleanHash = hash.trim();
+  if (!/^[a-fA-F0-9]{32}$|^[a-fA-F0-9]{40}$|^[a-fA-F0-9]{64}$/.test(cleanHash)) {
+    return new Response(JSON.stringify({ error: 'Invalid hash — must be MD5 (32), SHA-1 (40) or SHA-256 (64) hex' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
+    });
+  }
+
   try {
-    const res = await fetch(`${VT_API_BASE}/files/${hash}`, {
+    const res = await fetch(`${VT_API_BASE}/files/${cleanHash}`, {
       headers: { 'x-apikey': apiKey },
     });
 

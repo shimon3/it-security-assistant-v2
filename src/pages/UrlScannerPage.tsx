@@ -1,14 +1,28 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Globe, Search, Loader2 } from 'lucide-react';
 import { checkUrlWithVT, VTUrlResult } from '../utils/virusTotalApi';
 import PageHeader from '../components/PageHeader';
 import { VTVerdictCard, VTEngineBreakdown } from '../components/VTVerdict';
 
-export default function UrlScannerPage() {
-  const [input, setInput] = useState('');
+interface UrlScannerPageProps {
+  initialUrl?: string;
+  onUrlConsumed?: () => void;
+}
+
+export default function UrlScannerPage({ initialUrl = '', onUrlConsumed }: UrlScannerPageProps) {
+  const [input, setInput] = useState(initialUrl);
   const [result, setResult] = useState<VTUrlResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (initialUrl) {
+      setInput(initialUrl);
+      setResult(null);
+      setError('');
+      onUrlConsumed?.();
+    }
+  }, [initialUrl, onUrlConsumed]);
 
   async function handleScan() {
     const trimmed = input.trim();
@@ -29,7 +43,6 @@ export default function UrlScannerPage() {
     }
   }
 
-
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       <PageHeader
@@ -39,6 +52,12 @@ export default function UrlScannerPage() {
       />
 
       <div className="max-w-2xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
+        {initialUrl && (
+          <div className="flex items-center gap-2 text-xs text-sky-400 bg-sky-500/10 border border-sky-500/20 rounded-lg px-3 py-2">
+            <Globe className="w-3.5 h-3.5 shrink-0" />
+            URL imported from QR code scanner
+          </div>
+        )}
         <div className="space-y-3">
           <label className="text-sm font-medium text-slate-300">URL or Domain</label>
           <div className="flex gap-3">

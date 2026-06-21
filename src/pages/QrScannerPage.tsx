@@ -249,17 +249,12 @@ export default function QrScannerPage() {
                     <ExternalLink className="w-3 h-3 shrink-0" />
                     URL detected — scan before opening
                   </div>
-                  <a
-                    href={`#`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      (window as Window & { __qrUrlToScan?: string }).__qrUrlToScan = result;
-                      window.dispatchEvent(new CustomEvent('qr-scan-url', { detail: result }));
-                    }}
+                  <button
+                    onClick={() => window.dispatchEvent(new CustomEvent('qr-scan-url', { detail: result }))}
                     className="flex items-center justify-center gap-1.5 text-xs text-sky-400 hover:text-sky-300 border border-sky-500/30 hover:border-sky-500/50 px-3 py-1.5 rounded-lg transition-all"
                   >
                     Scan URL with VirusTotal →
-                  </a>
+                  </button>
                 </div>
               )}
             </div>

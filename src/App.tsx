@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Menu, Shield } from 'lucide-react';
 import HomePage from './pages/HomePage';
 import AnalysisPage from './pages/AnalysisPage';
@@ -18,6 +18,18 @@ export default function App() {
   const [inApp, setInApp] = useState(false);
   const [activeTool, setActiveTool] = useState<Tool>('email');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [qrUrl, setQrUrl] = useState('');
+
+  useEffect(() => {
+    function handleQrUrl(e: Event) {
+      const url = (e as CustomEvent<string>).detail;
+      setQrUrl(url);
+      setActiveTool('url');
+      setSidebarOpen(false);
+    }
+    window.addEventListener('qr-scan-url', handleQrUrl);
+    return () => window.removeEventListener('qr-scan-url', handleQrUrl);
+  }, []);
 
   if (!inApp) {
     return <HomePage onStart={() => setInApp(true)} />;
@@ -56,7 +68,7 @@ export default function App() {
         </div>
 
         {activeTool === 'email'   && <AnalysisPage onBack={() => setInApp(false)} />}
-        {activeTool === 'url'     && <UrlScannerPage />}
+        {activeTool === 'url'     && <UrlScannerPage initialUrl={qrUrl} onUrlConsumed={() => setQrUrl('')} />}
         {activeTool === 'hash'    && <HashCheckerPage />}
         {activeTool === 'password'&& <PasswordCheckerPage />}
         {activeTool === 'ip'      && <IpLookupPage />}

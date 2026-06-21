@@ -52,10 +52,18 @@ export default async function handler(req: Request): Promise<Response> {
       { headers: { 'User-Agent': 'IT-Security-Assistant/1.0' } },
     );
 
+    if (res.status === 429) {
+      const result: SslResult = {
+        domain, status: 'error', grade: null, expiryDate: null, daysRemaining: null, issuer: null,
+        errorMessage: 'Too many requests — try again in a moment',
+      };
+      return respond(200, result);
+    }
+
     if (!res.ok) {
       const result: SslResult = {
         domain, status: 'error', grade: null, expiryDate: null, daysRemaining: null, issuer: null,
-        errorMessage: `SSL Labs returned ${res.status}`,
+        errorMessage: 'Analysis unavailable — try again later',
       };
       return respond(200, result);
     }

@@ -86,7 +86,7 @@ export default async function handler(req: Request): Promise<Response> {
 
   const apiKey = process.env.VIRUSTOTAL_API_KEY;
   if (!apiKey) {
-    return new Response(JSON.stringify({ error: 'Server misconfiguration: API key not set' }), {
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
@@ -119,6 +119,13 @@ export default async function handler(req: Request): Promise<Response> {
 
   if (urls.some((u) => (u as string).length > 2048)) {
     return new Response(JSON.stringify({ error: 'URL too long' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
+    });
+  }
+
+  if (urls.some((u) => !/^https?:\/\//i.test(u as string))) {
+    return new Response(JSON.stringify({ error: 'Invalid URL — must start with http:// or https://' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
