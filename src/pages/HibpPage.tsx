@@ -55,7 +55,7 @@ export default function HibpPage() {
         description="Check if your credentials appear in known data breaches"
       />
 
-      <div className="max-w-2xl mx-auto px-8 py-8 space-y-8">
+      <div className="max-w-2xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-8">
 
         {/* Section 1: Password Breach Check */}
         <div className="space-y-4">

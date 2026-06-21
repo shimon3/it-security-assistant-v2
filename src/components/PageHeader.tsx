@@ -6,7 +6,7 @@ interface PageHeaderProps {
 
 export default function PageHeader({ icon, title, description }: PageHeaderProps) {
   return (
-    <div className="px-8 py-7 border-b border-slate-800">
+    <div className="px-4 sm:px-8 py-5 sm:py-7 border-b border-slate-800">
       <div className="flex items-center gap-3 mb-1">
         {icon}
         <h1 className="text-xl font-bold text-white">{title}</h1>

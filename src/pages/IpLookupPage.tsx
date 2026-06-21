@@ -54,7 +54,7 @@ export default function IpLookupPage() {
         description="Check IP address reputation via VirusTotal"
       />
 
-      <div className="max-w-2xl mx-auto px-8 py-8 space-y-6">
+      <div className="max-w-2xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
         <div className="space-y-3">
           <label className="text-sm font-medium text-slate-300">IP Address</label>
           <div className="flex gap-3">
@@ -93,7 +93,7 @@ export default function IpLookupPage() {
             {/* IP Details */}
             <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
               <p className="text-sm font-semibold text-slate-300">IP Details</p>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
                   <p className="text-xs text-slate-500 mb-1">Country</p>
                   <p className="text-sm font-medium text-slate-200">{result.country ?? '—'}</p>
@@ -102,7 +102,7 @@ export default function IpLookupPage() {
                   <p className="text-xs text-slate-500 mb-1">ASN</p>
                   <p className="text-sm font-medium text-slate-200">{result.asn != null ? `AS${result.asn}` : '—'}</p>
                 </div>
-                <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700 col-span-3 sm:col-span-1">
+                <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700 col-span-2 sm:col-span-1">
                   <p className="text-xs text-slate-500 mb-1">AS Owner</p>
                   <p className="text-sm font-medium text-slate-200 truncate">{result.asOwner ?? '—'}</p>
                 </div>

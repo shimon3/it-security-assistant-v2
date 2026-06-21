@@ -171,7 +171,7 @@ export default function EncoderPage() {
         description="Encode and decode Base64, URL, and Hex strings"
       />
 
-      <div className="max-w-3xl mx-auto px-8 py-8 space-y-6">
+      <div className="max-w-3xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
 
         {/* Base64 */}
         <EncoderSection

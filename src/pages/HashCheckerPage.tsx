@@ -46,7 +46,7 @@ export default function HashCheckerPage() {
         description="Verify if a file is malicious by checking its hash against VirusTotal"
       />
 
-      <div className="max-w-2xl mx-auto px-8 py-8 space-y-6">
+      <div className="max-w-2xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-slate-300">File Hash</label>

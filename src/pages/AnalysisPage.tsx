@@ -138,7 +138,7 @@ export default function AnalysisPage({ onBack }: AnalysisPageProps) {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col">
-      <nav className="px-6 py-3 flex items-center border-b border-slate-800">
+      <nav className="px-4 sm:px-6 py-3 flex items-center border-b border-slate-800">
         <button
           onClick={onBack}
           className="flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors text-sm"
@@ -164,7 +164,7 @@ export default function AnalysisPage({ onBack }: AnalysisPageProps) {
         description="Paste the email details below to scan for threats"
       />
 
-      <main className="flex-1 px-6 py-10">
+      <main className="flex-1 px-4 sm:px-6 py-6 sm:py-10">
         <div className="max-w-2xl mx-auto space-y-8">
           {showHistory && (
             <HistoryPanel

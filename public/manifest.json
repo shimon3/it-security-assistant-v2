@@ -1,0 +1,19 @@
+{
+  "name": "IT Security Assistant",
+  "short_name": "SecAssist",
+  "description": "All-in-one IT security toolkit — analyze emails, scan URLs, check breaches and more.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["security", "utilities"]
+}
