@@ -1,6 +1,7 @@
 export const config = { runtime: 'edge' };
 
 const VT_API_BASE = 'https://www.virustotal.com/api/v3';
+const CORS_ORIGIN = 'https://it-security-assistant-v2.vercel.app';
 
 function extractHostname(input: string): string {
   let s = input.trim();
@@ -13,7 +14,7 @@ export default async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
   }
 
@@ -21,7 +22,7 @@ export default async function handler(req: Request): Promise<Response> {
   if (!apiKey) {
     return new Response(JSON.stringify({ error: 'Server misconfiguration: API key not set' }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
   }
 
@@ -31,7 +32,7 @@ export default async function handler(req: Request): Promise<Response> {
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
   }
 
@@ -39,11 +40,25 @@ export default async function handler(req: Request): Promise<Response> {
   if (typeof raw !== 'string' || raw.trim() === '') {
     return new Response(JSON.stringify({ error: 'Missing or invalid field: domain' }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
   }
 
   const domain = extractHostname(raw);
+
+  if (domain.length > 253) {
+    return new Response(JSON.stringify({ error: 'Input too long' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
+    });
+  }
+
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9\-\.]{0,251}[a-zA-Z0-9]$/i.test(domain)) {
+    return new Response(JSON.stringify({ error: 'Invalid domain format' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
+    });
+  }
 
   try {
     const res = await fetch(`${VT_API_BASE}/domains/${domain}`, {
@@ -54,7 +69,7 @@ export default async function handler(req: Request): Promise<Response> {
       const result = { domain, registrar: null, creationDate: null, categories: [], malicious: 0, suspicious: 0, harmless: 0, undetected: 0, total: 0, status: 'error', errorMessage: 'Domain not found' };
       return new Response(JSON.stringify(result), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
       });
     }
 
@@ -62,7 +77,7 @@ export default async function handler(req: Request): Promise<Response> {
       const result = { domain, registrar: null, creationDate: null, categories: [], malicious: 0, suspicious: 0, harmless: 0, undetected: 0, total: 0, status: 'error', errorMessage: 'Rate limit reached (4 req/min on free tier)' };
       return new Response(JSON.stringify(result), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
       });
     }
 
@@ -70,7 +85,7 @@ export default async function handler(req: Request): Promise<Response> {
       const result = { domain, registrar: null, creationDate: null, categories: [], malicious: 0, suspicious: 0, harmless: 0, undetected: 0, total: 0, status: 'error', errorMessage: `API error ${res.status}` };
       return new Response(JSON.stringify(result), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
       });
     }
 
@@ -114,13 +129,13 @@ export default async function handler(req: Request): Promise<Response> {
     };
     return new Response(JSON.stringify(result), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
   } catch {
     const result = { domain, registrar: null, creationDate: null, categories: [], malicious: 0, suspicious: 0, harmless: 0, undetected: 0, total: 0, status: 'error', errorMessage: 'Network error' };
     return new Response(JSON.stringify(result), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
   }
 }

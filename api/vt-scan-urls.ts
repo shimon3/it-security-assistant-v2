@@ -2,6 +2,7 @@ export const config = { runtime: 'edge' };
 
 const VT_API_BASE = 'https://www.virustotal.com/api/v3';
 const MAX_URLS = 5;
+const CORS_ORIGIN = 'https://it-security-assistant-v2.vercel.app';
 
 function getUrlId(url: string): string {
   return btoa(url).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
@@ -79,7 +80,7 @@ export default async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
   }
 
@@ -87,7 +88,7 @@ export default async function handler(req: Request): Promise<Response> {
   if (!apiKey) {
     return new Response(JSON.stringify({ error: 'Server misconfiguration: API key not set' }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
   }
 
@@ -97,7 +98,7 @@ export default async function handler(req: Request): Promise<Response> {
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
   }
 
@@ -105,21 +106,28 @@ export default async function handler(req: Request): Promise<Response> {
   if (!Array.isArray(urls) || urls.length === 0) {
     return new Response(JSON.stringify({ error: 'Missing or invalid field: urls (must be a non-empty array)' }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
   }
 
   if (urls.some((u) => typeof u !== 'string' || u.trim() === '')) {
     return new Response(JSON.stringify({ error: 'Invalid field: urls must contain non-empty strings only' }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
+    });
+  }
+
+  if (urls.some((u) => (u as string).length > 2048)) {
+    return new Response(JSON.stringify({ error: 'URL too long' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
   }
 
   if (urls.length > MAX_URLS) {
     return new Response(JSON.stringify({ error: `Too many URLs for a single batch (max ${MAX_URLS})` }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
   }
 
@@ -135,6 +143,6 @@ export default async function handler(req: Request): Promise<Response> {
 
   return new Response(JSON.stringify(results), {
     status: 200,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
   });
 }

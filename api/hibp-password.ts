@@ -1,10 +1,12 @@
 export const config = { runtime: 'edge' };
 
+const CORS_ORIGIN = 'https://it-security-assistant-v2.vercel.app';
+
 export default async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
   }
 
@@ -14,7 +16,7 @@ export default async function handler(req: Request): Promise<Response> {
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
   }
 
@@ -22,7 +24,14 @@ export default async function handler(req: Request): Promise<Response> {
   if (typeof password !== 'string' || password === '') {
     return new Response(JSON.stringify({ error: 'Missing or invalid field: password' }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
+    });
+  }
+
+  if (password.length > 1024) {
+    return new Response(JSON.stringify({ error: 'Input too long' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
   }
 
@@ -39,7 +48,7 @@ export default async function handler(req: Request): Promise<Response> {
     if (!res.ok) {
       return new Response(JSON.stringify({ pwned: false, count: 0, errorMessage: 'Check failed' }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
       });
     }
 
@@ -57,12 +66,12 @@ export default async function handler(req: Request): Promise<Response> {
 
     return new Response(JSON.stringify({ pwned: count > 0, count }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
   } catch {
     return new Response(JSON.stringify({ pwned: false, count: 0, errorMessage: 'Check failed' }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
   }
 }

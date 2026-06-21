@@ -1,12 +1,13 @@
 export const config = { runtime: 'edge' };
 
 const VT_API_BASE = 'https://www.virustotal.com/api/v3';
+const CORS_ORIGIN = 'https://it-security-assistant-v2.vercel.app';
 
 export default async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
   }
 
@@ -14,7 +15,7 @@ export default async function handler(req: Request): Promise<Response> {
   if (!apiKey) {
     return new Response(JSON.stringify({ error: 'Server misconfiguration: API key not set' }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
   }
 
@@ -24,7 +25,7 @@ export default async function handler(req: Request): Promise<Response> {
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
   }
 
@@ -32,7 +33,7 @@ export default async function handler(req: Request): Promise<Response> {
   if (typeof hash !== 'string' || hash.trim() === '') {
     return new Response(JSON.stringify({ error: 'Missing or invalid field: hash' }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
   }
 
@@ -45,7 +46,7 @@ export default async function handler(req: Request): Promise<Response> {
       const result = { hash, fileName: null, fileType: null, malicious: 0, suspicious: 0, harmless: 0, undetected: 0, total: 0, status: 'not_found', threatNames: [], errorMessage: 'Hash not found in VirusTotal database' };
       return new Response(JSON.stringify(result), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
       });
     }
 
@@ -53,7 +54,7 @@ export default async function handler(req: Request): Promise<Response> {
       const result = { hash, fileName: null, fileType: null, malicious: 0, suspicious: 0, harmless: 0, undetected: 0, total: 0, status: 'error', threatNames: [], errorMessage: 'Rate limit reached (4 req/min on free tier)' };
       return new Response(JSON.stringify(result), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
       });
     }
 
@@ -61,7 +62,7 @@ export default async function handler(req: Request): Promise<Response> {
       const result = { hash, fileName: null, fileType: null, malicious: 0, suspicious: 0, harmless: 0, undetected: 0, total: 0, status: 'error', threatNames: [], errorMessage: `API error ${res.status}` };
       return new Response(JSON.stringify(result), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
       });
     }
 
@@ -112,13 +113,13 @@ export default async function handler(req: Request): Promise<Response> {
     };
     return new Response(JSON.stringify(result), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
   } catch {
     const result = { hash, fileName: null, fileType: null, malicious: 0, suspicious: 0, harmless: 0, undetected: 0, total: 0, status: 'error', threatNames: [], errorMessage: 'Network error' };
     return new Response(JSON.stringify(result), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
   }
 }
