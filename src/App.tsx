@@ -4,6 +4,10 @@ import AnalysisPage from './pages/AnalysisPage';
 import UrlScannerPage from './pages/UrlScannerPage';
 import HashCheckerPage from './pages/HashCheckerPage';
 import PasswordCheckerPage from './pages/PasswordCheckerPage';
+import IpLookupPage from './pages/IpLookupPage';
+import DomainWhoisPage from './pages/DomainWhoisPage';
+import HibpPage from './pages/HibpPage';
+import EncoderPage from './pages/EncoderPage';
 import Sidebar, { Tool } from './components/Sidebar';
 
 export default function App() {
@@ -22,6 +26,10 @@ export default function App() {
         {activeTool === 'url'      && <UrlScannerPage />}
         {activeTool === 'hash'     && <HashCheckerPage />}
         {activeTool === 'password' && <PasswordCheckerPage />}
+        {activeTool === 'ip'       && <IpLookupPage />}
+        {activeTool === 'domain'   && <DomainWhoisPage />}
+        {activeTool === 'hibp'     && <HibpPage />}
+        {activeTool === 'encoder'  && <EncoderPage />}
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
-import { Mail, Globe, Hash, Lock, Shield } from 'lucide-react';
+import { Mail, Globe, Hash, Lock, Shield, Search, ShieldAlert, Code2 } from 'lucide-react';
 
-export type Tool = 'email' | 'url' | 'hash' | 'password';
+export type Tool = 'email' | 'url' | 'hash' | 'password' | 'ip' | 'domain' | 'hibp' | 'encoder';
 
 interface SidebarProps {
   activeTool: Tool;
@@ -8,10 +8,14 @@ interface SidebarProps {
 }
 
 const tools: { id: Tool; label: string; icon: React.ElementType; desc: string }[] = [
-  { id: 'email',    label: 'Email Analysis',    icon: Mail,   desc: 'Phishing detection'   },
-  { id: 'url',      label: 'URL Scanner',        icon: Globe,  desc: 'URL reputation'       },
-  { id: 'hash',     label: 'Hash Checker',       icon: Hash,   desc: 'File threat lookup'   },
-  { id: 'password', label: 'Password Strength',  icon: Lock,   desc: 'Security evaluator'   },
+  { id: 'email',    label: 'Email Analysis',      icon: Mail,       desc: 'Phishing detection'   },
+  { id: 'url',      label: 'URL Scanner',          icon: Globe,      desc: 'URL reputation'       },
+  { id: 'hash',     label: 'Hash Checker',         icon: Hash,       desc: 'File threat lookup'   },
+  { id: 'password', label: 'Password Strength',    icon: Lock,       desc: 'Security evaluator'   },
+  { id: 'ip',       label: 'IP Lookup',            icon: Globe,      desc: 'IP reputation'        },
+  { id: 'domain',   label: 'Domain WHOIS',         icon: Search,     desc: 'Domain info'          },
+  { id: 'hibp',     label: 'Have I Been Pwned',    icon: ShieldAlert, desc: 'Breach check'        },
+  { id: 'encoder',  label: 'Encoder / Decoder',    icon: Code2,      desc: 'Base64, URL, Hex'    },
 ];
 
 export default function Sidebar({ activeTool, onSelect }: SidebarProps) {
