@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { KeyRound, X } from 'lucide-react';
 import { setToken } from '../utils/apiClient';
+import { useLanguage } from '../i18n';
 
 interface TokenPromptProps {
   onClose: () => void;
@@ -9,6 +10,7 @@ interface TokenPromptProps {
 /** Asks for the personal access token the /api routes require. */
 export default function TokenPrompt({ onClose }: TokenPromptProps) {
   const [value, setValue] = useState('');
+  const { t } = useLanguage();
 
   function save() {
     if (!value.trim()) return;
@@ -22,12 +24,12 @@ export default function TokenPrompt({ onClose }: TokenPromptProps) {
         <div className="flex items-start gap-3">
           <KeyRound className="w-5 h-5 text-brand shrink-0 mt-0.5" />
           <div className="flex-1">
-            <h2 id="token-title" className="text-base font-semibold text-ink">Access token</h2>
+            <h2 id="token-title" className="text-base font-semibold text-ink">{t('accessToken')}</h2>
             <p className="text-sm text-muted mt-1">
-              Online lookups are private. Enter your access token, then run the check again.
+              {t('accessTokenDesc')}
             </p>
           </div>
-          <button onClick={onClose} className="text-muted hover:text-ink" aria-label="Close">
+          <button onClick={onClose} className="text-muted hover:text-ink" aria-label={t('close')}>
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -41,7 +43,7 @@ export default function TokenPrompt({ onClose }: TokenPromptProps) {
           autoComplete="current-password"
           className="w-full bg-canvas border border-line rounded-xl px-4 py-3 text-ink placeholder-faint focus:outline-none focus:border-brand text-sm"
         />
-        <p className="text-xs text-muted">Kept for this browser tab only.</p>
+        <p className="text-xs text-muted">{t('tokenTabOnly')}</p>
         <button
           onClick={save}
           disabled={!value.trim()}

@@ -2,17 +2,12 @@ import { useState } from 'react';
 import { MailSearch, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
 import { analyzeHeaders, HeaderAnalysisResult } from '../utils/headerAnalyzer';
+import { useLanguage } from '../i18n';
 
 function severityColor(severity: number): string {
   if (severity >= 25) return 'text-red-700 bg-red-50 border-red-200';
   if (severity >= 15) return 'text-amber-700 bg-amber-50 border-amber-200';
   return 'text-brand bg-brand-soft border-brand/25';
-}
-
-function severityLabel(severity: number): string {
-  if (severity >= 25) return 'High';
-  if (severity >= 15) return 'Medium';
-  return 'Low';
 }
 
 function scoreColor(score: number): string {
@@ -31,6 +26,7 @@ Message-ID: <12345@different-domain.net>
 Subject: Urgent: Your account has been limited`;
 
 export default function HeaderAnalyzerPage() {
+  const { t } = useLanguage();
   const [headers, setHeaders] = useState('');
   const [result, setResult] = useState<HeaderAnalysisResult | null>(null);
   const [expanded, setExpanded] = useState<number | null>(null);
@@ -50,19 +46,19 @@ export default function HeaderAnalyzerPage() {
     <div className="min-h-screen bg-canvas text-ink">
       <PageHeader
         icon={<MailSearch className="w-5 h-5 text-brand" />}
-        title="Email Header Analyzer"
-        description="Paste raw email headers to detect spoofing, SPF/DKIM failures, and routing anomalies"
+        title={t('headerAnalyzerTitle')}
+        description={t('headerAnalyzerDesc')}
       />
 
       <div className="max-w-2xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-ink-2">Raw Email Headers</label>
+            <label className="text-sm font-medium text-ink-2">{t('rawEmailHeaders')}</label>
             <button
               onClick={() => setHeaders(EXAMPLE_HEADERS)}
               className="text-xs text-muted hover:text-brand transition-colors"
             >
-              Load example
+              {t('loadExample')}
             </button>
           </div>
           <textarea
@@ -70,10 +66,10 @@ export default function HeaderAnalyzerPage() {
             onChange={(e) => { setHeaders(e.target.value); if (result) setResult(null); }}
             placeholder={`Received: from mail.example.com...\nFrom: sender@example.com\nReply-To: other@suspicious.com\nAuthentication-Results: dkim=fail\n...`}
             rows={10}
-            className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-ink-2 placeholder-faint focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all text-xs font-mono resize-none leading-relaxed"
+            dir="ltr" className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-ink-2 placeholder-faint focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all text-xs font-mono resize-none leading-relaxed"
           />
           <p className="text-xs text-faint">
-            In Gmail: open email → ⋮ menu → "Show original". In Outlook: File → Properties → Internet headers.
+            {t('headerHelp')}
           </p>
         </div>
 
@@ -84,7 +80,7 @@ export default function HeaderAnalyzerPage() {
             className="flex-1 flex items-center justify-center gap-2 bg-brand hover:bg-brand-strong disabled:bg-brand/30 disabled:cursor-not-allowed text-white font-semibold px-6 py-3.5 rounded-xl transition-all text-sm"
           >
             <MailSearch className="w-4 h-4" />
-            Analyze Headers
+            {t('analyzeHeaders')}
           </button>
           {(result || headers) && (
             <button
@@ -101,12 +97,12 @@ export default function HeaderAnalyzerPage() {
             {/* Score */}
             <div className="flex items-center justify-between bg-surface border border-line rounded-xl px-5 py-4">
               <div>
-                <p className="text-sm text-muted">Suspicion Score</p>
+                <p className="text-sm text-muted">{t('suspicionScore')}</p>
                 <p className={`text-3xl font-black mt-1 ${scoreColor(result.score)}`}>{result.score}<span className="text-lg font-normal text-faint">/100</span></p>
               </div>
               <div className="text-right">
                 <p className="text-sm font-semibold text-ink-2">
-                  {result.score >= 60 ? 'High Risk' : result.score >= 30 ? 'Suspicious' : 'Low Risk'}
+                  {result.score >= 60 ? t('riskHigh') : result.score >= 30 ? t('riskSuspicious') : t('riskLow')}
                 </p>
                 <p className="text-xs text-faint mt-1">
                   {result.detections.length} {result.detections.length === 1 ? 'issue' : 'issues'} found
@@ -117,20 +113,20 @@ export default function HeaderAnalyzerPage() {
             {result.detections.length === 0 ? (
               <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-4">
                 <AlertTriangle className="w-5 h-5 text-emerald-700 shrink-0" />
-                <p className="text-emerald-700 font-semibold text-sm">No suspicious header patterns detected</p>
+                <p className="text-emerald-700 font-semibold text-sm">{t('noSuspiciousHeaders')}</p>
               </div>
             ) : (
               <div className="space-y-2">
-                <p className="text-sm font-semibold text-ink-2">Detections</p>
+                <p className="text-sm font-semibold text-ink-2">{t('detections')}</p>
                 {result.detections.map((d, i) => (
                   <div key={i} className={`rounded-xl border overflow-hidden`}>
                     <button
-                      className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-sunken transition-colors"
+                      className="w-full flex items-center justify-between px-4 py-3 text-start hover:bg-sunken transition-colors"
                       onClick={() => setExpanded(expanded === i ? null : i)}
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <span className={`text-xs font-bold px-2 py-0.5 rounded border shrink-0 ${severityColor(d.severity)}`}>
-                          {severityLabel(d.severity)}
+                          {d.severity >= 25 ? t('severityHigh') : d.severity >= 15 ? t('severityMedium') : t('severityLow')}
                         </span>
                         <span className="text-sm font-mono text-ink-2 truncate">{d.header}</span>
                       </div>

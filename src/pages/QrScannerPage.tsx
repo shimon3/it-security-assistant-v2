@@ -3,11 +3,13 @@ import { QrCode, Upload, Camera, X, ExternalLink } from 'lucide-react';
 import jsQR from 'jsqr';
 import PageHeader from '../components/PageHeader';
 import { useAuditMode } from '../utils/auditMode';
+import { useLanguage } from '../i18n';
 
 type Mode = 'upload' | 'camera';
 
 export default function QrScannerPage() {
   const [auditMode] = useAuditMode();
+  const { t } = useLanguage();
   const [mode, setMode] = useState<Mode>('upload');
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -70,7 +72,7 @@ export default function QrScannerPage() {
         rafRef.current = requestAnimationFrame(scanFrameLoop);
       }
     } catch {
-      setError('Camera access denied or unavailable on this device.');
+      setError(t('cameraUnavailable'));
     }
   }
 
@@ -93,12 +95,12 @@ export default function QrScannerPage() {
       if (code) {
         setResult(code.data);
       } else {
-        setError('No QR code found in this image. Try a clearer photo.');
+        setError(t('qrNotFound'));
       }
       URL.revokeObjectURL(url);
     };
     img.onerror = () => {
-      setError('Could not read image file.');
+      setError(t('imageReadFailed'));
       URL.revokeObjectURL(url);
     };
     img.src = url;
@@ -129,8 +131,8 @@ export default function QrScannerPage() {
     <div className="min-h-screen bg-canvas text-ink">
       <PageHeader
         icon={<QrCode className="w-5 h-5 text-brand" />}
-        title="QR Code Scanner"
-        description="Decode QR codes from images or your camera — detect phishing links instantly"
+        title={t('qrTitle')}
+        description={t('qrDesc')}
       />
 
       <div className="max-w-2xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
@@ -147,7 +149,7 @@ export default function QrScannerPage() {
               }`}
             >
               {m === 'upload' ? <Upload className="w-4 h-4" /> : <Camera className="w-4 h-4" />}
-              {m === 'upload' ? 'Upload Image' : 'Camera Scan'}
+              {m === 'upload' ? t('uploadImage') : t('cameraScan')}
             </button>
           ))}
         </div>
@@ -169,8 +171,8 @@ export default function QrScannerPage() {
               <QrCode className="w-7 h-7 text-brand" />
             </div>
             <div className="text-center">
-              <p className="text-ink-2 font-medium text-sm">Drop an image here or tap to browse</p>
-              <p className="text-faint text-xs mt-1">PNG, JPG, WebP — screenshot or photo of a QR code</p>
+              <p className="text-ink-2 font-medium text-sm">{t('dropImage')}</p>
+              <p className="text-faint text-xs mt-1">{t('qrImageHint')}</p>
             </div>
             <input
               ref={fileInputRef}
@@ -195,7 +197,7 @@ export default function QrScannerPage() {
               {!cameraActive && (
                 <div className="flex flex-col items-center gap-3 py-8">
                   <Camera className="w-10 h-10 text-faint" />
-                  <p className="text-muted text-sm">Camera not started</p>
+                  <p className="text-muted text-sm">{t('cameraNotStarted')}</p>
                 </div>
               )}
               {cameraActive && (
@@ -210,7 +212,7 @@ export default function QrScannerPage() {
                 className="w-full flex items-center justify-center gap-2 bg-brand hover:bg-brand-strong text-white font-semibold py-3.5 rounded-xl transition-all text-sm"
               >
                 <Camera className="w-4 h-4" />
-                Start Camera
+                {t('startCamera')}
               </button>
             ) : (
               <button
@@ -218,7 +220,7 @@ export default function QrScannerPage() {
                 className="w-full flex items-center justify-center gap-2 bg-sunken hover:bg-line border border-line-strong text-ink-2 font-medium py-3.5 rounded-xl transition-all text-sm"
               >
                 <X className="w-4 h-4" />
-                Stop Camera
+                {t('stopCamera')}
               </button>
             )}
           </div>
@@ -234,9 +236,9 @@ export default function QrScannerPage() {
         {result && (
           <div className="animate-fade-in space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-ink-2">QR Code Content</p>
+              <p className="text-sm font-semibold text-ink-2">{t('qrContent')}</p>
               <button onClick={handleReset} className="text-xs text-muted hover:text-ink-2 transition-colors">
-                Scan another
+                {t('scanAnother')}
               </button>
             </div>
 
@@ -249,13 +251,13 @@ export default function QrScannerPage() {
                 <div className="flex flex-col sm:flex-row gap-2 pt-1">
                   <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg">
                     <ExternalLink className="w-3 h-3 shrink-0" />
-                    URL detected — scan before opening
+                    {t('urlDetected')}
                   </div>
                   {!auditMode && <button
                     onClick={() => window.dispatchEvent(new CustomEvent('qr-scan-url', { detail: result }))}
                     className="flex items-center justify-center gap-1.5 text-xs text-brand hover:text-brand-strong border border-brand/30 hover:border-brand/60 px-3 py-1.5 rounded-lg transition-all"
                   >
-                    Scan URL with VirusTotal →
+                    {t('scanWithVt')} →
                   </button>}
                 </div>
               )}

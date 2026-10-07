@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ShieldCheck, Search, Loader2, RefreshCw } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
 import { apiPost, apiErrorOf, errorMessage } from '../utils/apiClient';
+import { useLanguage } from '../i18n';
 
 interface SslResult {
   domain: string;
@@ -34,10 +35,11 @@ export default function SslCheckerPage() {
   const [result, setResult] = useState<SslResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { t } = useLanguage();
 
   async function handleCheck(domain = input) {
     const trimmed = domain.trim();
-    if (!trimmed) { setError('Please enter a domain to check.'); return; }
+    if (!trimmed) { setError(t('enterDomainCheck')); return; }
     setError('');
     setResult(null);
     setLoading(true);
@@ -45,7 +47,7 @@ export default function SslCheckerPage() {
     try {
       const res = await apiPost<SslResult>('/api/ssl-check', { domain: trimmed });
       if (res.data && 'status' in res.data) setResult(res.data);
-      else setError(apiErrorOf(res) ?? 'Check failed — verify your connection and try again.');
+      else setError(apiErrorOf(res) ?? t('checkFailed'));
     } catch (err) {
       setError(errorMessage(err, 'Check failed — verify your connection and try again.'));
     } finally {
@@ -66,24 +68,24 @@ export default function SslCheckerPage() {
     : 'bg-red-50 border-red-200';
 
   const statusLabel: Record<string, string> = {
-    valid: 'Certificate Valid',
-    expiring: 'Expiring Soon',
-    invalid: 'Certificate Invalid',
-    pending: 'Analysis in Progress',
-    error: 'Check Failed',
+    valid: t('certificateValid'),
+    expiring: t('expiringSoon'),
+    invalid: t('certificateInvalid'),
+    pending: t('analysisInProgress'),
+    error: t('checkFailedLabel'),
   };
 
   return (
     <div className="min-h-screen bg-canvas text-ink">
       <PageHeader
         icon={<ShieldCheck className="w-5 h-5 text-brand" />}
-        title="SSL/TLS Checker"
-        description="Verify SSL certificate validity and grade via Qualys SSL Labs"
+        title={t('sslTitle')}
+        description={t('sslDesc')}
       />
 
       <div className="max-w-2xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
         <div className="space-y-3">
-          <label className="text-sm font-medium text-ink-2">Domain</label>
+          <label className="text-sm font-medium text-ink-2">{t('domain')}</label>
           <div className="flex gap-3">
             <input
               type="text"
@@ -91,7 +93,7 @@ export default function SslCheckerPage() {
               onChange={(e) => { setInput(e.target.value); if (error) setError(''); }}
               onKeyDown={(e) => e.key === 'Enter' && handleCheck()}
               placeholder="e.g. github.com"
-              className="flex-1 bg-surface border border-line rounded-xl px-4 py-3 text-ink placeholder-faint focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all text-sm"
+              dir="ltr" className="flex-1 bg-surface border border-line rounded-xl px-4 py-3 text-ink placeholder-faint focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all text-sm"
             />
             <button
               onClick={() => handleCheck()}
@@ -103,7 +105,7 @@ export default function SslCheckerPage() {
             </button>
           </div>
           {error && <p className="text-red-700 text-xs">{error}</p>}
-          <p className="text-xs text-faint">Protocol is stripped automatically. Powered by Qualys SSL Labs.</p>
+          <p className="text-xs text-faint">{t('sslHint')}</p>
         </div>
 
         {result && (
@@ -145,7 +147,7 @@ export default function SslCheckerPage() {
                     className="flex items-center gap-1.5 text-xs text-brand hover:text-brand-strong border border-brand/30 px-3 py-1.5 rounded-lg transition-all"
                   >
                     <RefreshCw className="w-3 h-3" />
-                    Retry
+                    {t('retry')}
                   </button>
                 )}
               </div>
@@ -154,25 +156,25 @@ export default function SslCheckerPage() {
             {/* Details */}
             {(result.daysRemaining !== null || result.issuer) && (
               <div className="bg-surface border border-line rounded-xl p-5 space-y-4">
-                <p className="text-sm font-semibold text-ink-2">Certificate Details</p>
+                <p className="text-sm font-semibold text-ink-2">{t('certificateDetails')}</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {result.daysRemaining !== null && (
                     <div className="bg-sunken rounded-lg p-3 border border-line-strong">
-                      <p className="text-xs text-muted mb-1">Expires in</p>
+                      <p className="text-xs text-muted mb-1">{t('expiresIn')}</p>
                       <p className={`text-sm font-bold ${
                         result.daysRemaining <= 0 ? 'text-red-700'
                         : result.daysRemaining <= 30 ? 'text-amber-700'
                         : 'text-emerald-700'
                       }`}>
                         {result.daysRemaining <= 0
-                          ? 'Expired'
-                          : `${result.daysRemaining} days`}
+                          ? t('expired')
+                          : `${result.daysRemaining} ${t('days')}`}
                       </p>
                     </div>
                   )}
                   {result.expiryDate && (
                     <div className="bg-sunken rounded-lg p-3 border border-line-strong">
-                      <p className="text-xs text-muted mb-1">Expiry Date</p>
+                      <p className="text-xs text-muted mb-1">{t('expiryDate')}</p>
                       <p className="text-sm font-medium text-ink">
                         {new Date(result.expiryDate).toLocaleDateString()}
                       </p>
@@ -180,7 +182,7 @@ export default function SslCheckerPage() {
                   )}
                   {result.issuer && (
                     <div className="bg-sunken rounded-lg p-3 border border-line-strong sm:col-span-2">
-                      <p className="text-xs text-muted mb-1">Certificate Authority</p>
+                      <p className="text-xs text-muted mb-1">{t('certificateAuthority')}</p>
                       <p className="text-sm font-medium text-ink truncate">{result.issuer}</p>
                     </div>
                   )}
@@ -192,8 +194,7 @@ export default function SslCheckerPage() {
             {result.grade && (
               <div className="bg-surface border border-line rounded-xl p-4">
                 <p className="text-xs text-muted leading-relaxed">
-                  <span className="text-muted font-medium">SSL Labs grades: </span>
-                  A+/A = excellent · B = minor issues · C = moderate issues · D/F = serious issues · T = untrusted cert
+                  <span className="text-muted font-medium">{t('sslGrades')}</span>
                 </p>
               </div>
             )}

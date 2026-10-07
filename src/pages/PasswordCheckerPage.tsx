@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Lock, Eye, EyeOff, RefreshCw } from 'lucide-react';
-import { checkPasswordStrength } from '../utils/passwordChecker';
+import zxcvbn from 'zxcvbn';
 import PageHeader from '../components/PageHeader';
+import { useLanguage } from '../i18n';
 
 function cryptoRandIndex(n: number): number {
   const limit = Math.floor(0xFFFFFFFF / n) * n;
@@ -12,7 +13,7 @@ function cryptoRandIndex(n: number): number {
   return value % n;
 }
 
-function generatePassword(length = 16): string {
+function generatePassword(length = 18): string {
   const lower = 'abcdefghijklmnopqrstuvwxyz';
   const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const digits = '0123456789';
@@ -25,12 +26,9 @@ function generatePassword(length = 16): string {
     digits[cryptoRandIndex(digits.length)],
     special[cryptoRandIndex(special.length)],
   ];
-
-  const rest = Array.from({ length: length - 4 }, () =>
-    all[cryptoRandIndex(all.length)]
-  );
-
+  const rest = Array.from({ length: length - 4 }, () => all[cryptoRandIndex(all.length)]);
   const chars = [...required, ...rest];
+
   for (let i = chars.length - 1; i > 0; i--) {
     const j = cryptoRandIndex(i + 1);
     [chars[i], chars[j]] = [chars[j], chars[i]];
@@ -38,17 +36,28 @@ function generatePassword(length = 16): string {
   return chars.join('');
 }
 
+const SCORE_STYLE = [
+  { text: 'text-red-700', bar: 'bg-red-600' },
+  { text: 'text-orange-700', bar: 'bg-orange-600' },
+  { text: 'text-amber-700', bar: 'bg-amber-600' },
+  { text: 'text-sky-700', bar: 'bg-sky-600' },
+  { text: 'text-emerald-700', bar: 'bg-emerald-600' },
+] as const;
+
 export default function PasswordCheckerPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [generatedPassword, setGeneratedPassword] = useState('');
   const [copied, setCopied] = useState(false);
+  const { t } = useLanguage();
 
-  const result = password ? checkPasswordStrength(password) : null;
+  const result = useMemo(() => (password ? zxcvbn(password) : null), [password]);
+  const style = result ? SCORE_STYLE[result.score] : SCORE_STYLE[0];
+  const labels = [t('veryWeak'), t('weak'), t('fair'), t('strong'), t('veryStrong')];
+  const barWidth = result ? `${((result.score + 1) / 5) * 100}%` : '0%';
 
   function handleGenerate() {
-    const pwd = generatePassword(18);
-    setGeneratedPassword(pwd);
+    setGeneratedPassword(generatePassword());
     setCopied(false);
   }
 
@@ -58,80 +67,83 @@ export default function PasswordCheckerPage() {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  const barWidth = result ? `${(result.score / 4) * 100}%` : '0%';
-
   return (
     <div className="min-h-screen bg-canvas text-ink">
       <PageHeader
         icon={<Lock className="w-5 h-5 text-brand" />}
-        title="Password Strength"
-        description="Evaluate your password security and generate strong alternatives"
+        title={t('passwordTitle')}
+        description={t('passwordDesc')}
       />
 
       <div className="max-w-2xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-8">
-
-        {/* Checker */}
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-ink-2">Enter Password to Evaluate</label>
+            <label className="text-sm font-medium text-ink-2">{t('passwordLabel')}</label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Type your password here..."
-                className="w-full bg-surface border border-line rounded-xl px-4 py-3 pr-11 text-ink placeholder-faint focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all text-sm"
+                placeholder={t('passwordPlaceholder')}
+                autoComplete="new-password"
+                className="w-full bg-surface border border-line rounded-xl px-4 py-3 pe-11 text-ink placeholder-faint focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all text-sm"
               />
               <button
+                type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink-2 transition-colors"
+                className="absolute end-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink-2 transition-colors"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-            <p className="text-xs text-faint">Your password is never sent anywhere — analysis runs entirely in your browser.</p>
+            <p className="text-xs text-faint">{t('passwordPrivacy')}</p>
           </div>
 
           {result && (
             <div className="space-y-4 animate-fade-in">
-              {/* Score bar */}
               <div className="bg-surface border border-line rounded-xl p-5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className={`font-bold text-lg ${result.color}`}>{result.label}</span>
-                  <span className="text-xs text-muted">{result.entropy} bits of entropy</span>
+                <div className="flex items-center justify-between gap-4">
+                  <span className={`font-bold text-lg ${style.text}`}>{labels[result.score]}</span>
+                  <span className="text-xs text-muted">zxcvbn score {result.score}/4</span>
                 </div>
                 <div className="h-2.5 bg-sunken rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all duration-500 ${result.barColor}`}
+                    className={`h-full rounded-full transition-all duration-500 ${style.bar}`}
                     style={{ width: barWidth }}
                   />
                 </div>
                 <div className="flex justify-between text-xs text-faint">
-                  <span>Very Weak</span>
-                  <span>Very Strong</span>
+                  <span>{t('veryWeak')}</span>
+                  <span>{t('veryStrong')}</span>
                 </div>
               </div>
 
-              {/* Stats */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="bg-surface border border-line rounded-xl p-4">
-                  <p className="text-xs text-muted mb-1">Time to crack (GPU)</p>
-                  <p className={`font-bold text-base ${result.color}`}>{result.timeToCrack}</p>
+                  <p className="text-xs text-muted mb-1">{t('offlineEstimate')}</p>
+                  <p className={`font-bold text-base ${style.text}`}>
+                    {result.crack_times_display.offline_fast_hashing_1e10_per_second}
+                  </p>
                 </div>
                 <div className="bg-surface border border-line rounded-xl p-4">
-                  <p className="text-xs text-muted mb-1">Entropy</p>
-                  <p className="font-bold text-base text-ink">{result.entropy} bits</p>
+                  <p className="text-xs text-muted mb-1">{t('onlineEstimate')}</p>
+                  <p className="font-bold text-base text-ink">
+                    {result.crack_times_display.online_throttling_100_per_hour}
+                  </p>
                 </div>
               </div>
 
-              {/* Feedback */}
-              {result.feedback.length > 0 && (
+              {(result.feedback.warning || result.feedback.suggestions.length > 0) && (
                 <div className="bg-surface border border-line rounded-xl p-5 space-y-2">
-                  <p className="text-sm font-semibold text-ink-2 mb-3">Suggestions</p>
-                  {result.feedback.map((f, i) => (
-                    <div key={i} className="flex items-start gap-2 text-sm text-muted">
+                  <p className="text-sm font-semibold text-ink-2 mb-3">{t('whyScore')}</p>
+                  {result.feedback.warning && (
+                    <p className="text-sm text-amber-800">{result.feedback.warning}</p>
+                  )}
+                  {result.feedback.suggestions.map((suggestion) => (
+                    <div key={suggestion} className="flex items-start gap-2 text-sm text-muted">
                       <span className="text-amber-700 mt-0.5 shrink-0">→</span>
-                      {f}
+                      <span>{suggestion}</span>
                     </div>
                   ))}
                 </div>
@@ -139,43 +151,43 @@ export default function PasswordCheckerPage() {
 
               {result.score === 4 && (
                 <div className="flex items-center gap-2 text-emerald-700 text-sm bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
-                  ✓ Excellent password — no improvements needed
+                  ✓ {t('strongMessage')}
                 </div>
               )}
             </div>
           )}
         </div>
 
-        {/* Divider */}
         <div className="border-t border-line" />
 
-        {/* Generator */}
         <div className="space-y-4">
           <div>
-            <h2 className="text-base font-semibold text-ink">Password Generator</h2>
-            <p className="text-muted text-sm mt-1">Generate a cryptographically strong 18-character password</p>
+            <h2 className="text-base font-semibold text-ink">{t('generatorTitle')}</h2>
+            <p className="text-muted text-sm mt-1">{t('generatorDesc')}</p>
           </div>
 
           <button
+            type="button"
             onClick={handleGenerate}
-            className="flex items-center gap-2 bg-sunken hover:bg-line border border-line-strong hover:border-line-strong text-ink font-medium px-4 py-2.5 rounded-xl transition-all text-sm"
+            className="flex items-center gap-2 bg-sunken hover:bg-line border border-line-strong text-ink font-medium px-4 py-2.5 rounded-xl transition-all text-sm"
           >
             <RefreshCw className="w-4 h-4" />
-            Generate Password
+            {t('generatePassword')}
           </button>
 
           {generatedPassword && (
             <div className="bg-surface border border-line rounded-xl p-4 space-y-3 animate-fade-in">
-              <div className="font-mono text-base text-brand-strong break-all tracking-wide">
+              <div className="font-mono text-base text-brand-strong break-all tracking-wide" dir="ltr">
                 {generatedPassword}
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-faint">18 characters · Upper + Lower + Digits + Symbols</span>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs text-faint">{t('charsInfo')}</span>
                 <button
+                  type="button"
                   onClick={handleCopy}
-                  className="text-xs text-muted hover:text-ink border border-line-strong hover:border-line-strong px-3 py-1.5 rounded-lg transition-all"
+                  className="text-xs text-muted hover:text-ink border border-line-strong px-3 py-1.5 rounded-lg transition-all"
                 >
-                  {copied ? <span className="text-emerald-700">✓ Copied!</span> : 'Copy'}
+                  {copied ? <span className="text-emerald-700">✓ {t('copied')}</span> : t('copy')}
                 </button>
               </div>
             </div>

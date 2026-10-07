@@ -3,6 +3,7 @@ import { Hash, Search, Loader2, FileSearch } from 'lucide-react';
 import { checkHashWithVT, VTFileResult } from '../utils/virusTotalApi';
 import PageHeader from '../components/PageHeader';
 import { VTVerdictCard, VTEngineBreakdown } from '../components/VTVerdict';
+import { useLanguage } from '../i18n';
 
 function detectHashType(hash: string): string | null {
   const h = hash.trim();
@@ -17,13 +18,14 @@ export default function HashCheckerPage() {
   const [result, setResult] = useState<VTFileResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { t } = useLanguage();
 
   const hashType = detectHashType(input);
 
   async function handleCheck() {
     const hash = input.trim();
-    if (!hash) { setError('Please enter a file hash.'); return; }
-    if (!detectHashType(hash)) { setError('Invalid hash — enter a valid MD5 (32), SHA-1 (40) or SHA-256 (64) hex string.'); return; }
+    if (!hash) { setError(t('enterHash')); return; }
+    if (!detectHashType(hash)) { setError(t('invalidHash')); return; }
     setError('');
     setResult(null);
     setLoading(true);
@@ -31,7 +33,7 @@ export default function HashCheckerPage() {
       const res = await checkHashWithVT(hash);
       setResult(res);
     } catch {
-      setError('Check failed — verify your connection.');
+      setError(t('checkFailed'));
     } finally {
       setLoading(false);
     }
@@ -42,17 +44,17 @@ export default function HashCheckerPage() {
     <div className="min-h-screen bg-canvas text-ink">
       <PageHeader
         icon={<Hash className="w-5 h-5 text-brand" />}
-        title="Hash Checker"
-        description="Verify if a file is malicious by checking its hash against VirusTotal"
+        title={t('hashTitle')}
+        description={t('hashDesc')}
       />
 
       <div className="max-w-2xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-ink-2">File Hash</label>
+            <label className="text-sm font-medium text-ink-2">{t('fileHash')}</label>
             {hashType && (
               <span className="text-xs font-mono text-brand bg-brand-soft border border-brand/25 px-2 py-0.5 rounded">
-                {hashType} detected
+                {hashType} {t('hashDetected')}
               </span>
             )}
           </div>
@@ -63,7 +65,7 @@ export default function HashCheckerPage() {
               onChange={(e) => { setInput(e.target.value); if (error) setError(''); }}
               onKeyDown={(e) => e.key === 'Enter' && handleCheck()}
               placeholder="MD5, SHA-1 or SHA-256 hash"
-              className="flex-1 bg-surface border border-line rounded-xl px-4 py-3 text-ink placeholder-faint focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all text-sm font-mono"
+              dir="ltr" className="flex-1 bg-surface border border-line rounded-xl px-4 py-3 text-ink placeholder-faint focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all text-sm font-mono"
             />
             <button
               onClick={handleCheck}
@@ -75,7 +77,7 @@ export default function HashCheckerPage() {
             </button>
           </div>
           {error && <p className="text-red-700 text-xs">{error}</p>}
-          <p className="text-xs text-faint">Supported: MD5 (32 chars), SHA-1 (40 chars), SHA-256 (64 chars)</p>
+          <p className="text-xs text-faint">{t('hashSupport')}</p>
         </div>
 
         {result && (
@@ -112,7 +114,7 @@ export default function HashCheckerPage() {
             {/* Threat names */}
             {result.threatNames.length > 0 && (
               <div className="bg-surface border border-line rounded-xl p-5 space-y-3">
-                <p className="text-sm font-semibold text-ink-2">Identified Threats</p>
+                <p className="text-sm font-semibold text-ink-2">{t('identifiedThreats')}</p>
                 <div className="flex flex-wrap gap-2">
                   {result.threatNames.map((name, i) => (
                     <span key={i} className="text-xs font-mono text-red-700 bg-red-50 border border-red-200 px-2 py-1 rounded">

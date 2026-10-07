@@ -18,6 +18,7 @@ import { copyReportToClipboard } from '../utils/exportReport';
 import RiskResults from '../components/RiskResults';
 import HistoryPanel, { HistoryEntry } from '../components/HistoryPanel';
 import { useAuditMode } from '../utils/auditMode';
+import { useLanguage } from '../i18n';
 
 interface AnalysisPageProps {
   onBack: () => void;
@@ -59,6 +60,7 @@ export default function AnalysisPage({ onBack }: AnalysisPageProps) {
   const [showHistory, setShowHistory] = useState(false);
   const [auditMode] = useAuditMode();
   const [anonymize, setAnonymize] = useState(true);
+  const { t, dir } = useLanguage();
 
   useEffect(() => {
     setHistory(loadHistory());
@@ -66,7 +68,7 @@ export default function AnalysisPage({ onBack }: AnalysisPageProps) {
 
   function handleAnalyze() {
     if (!emailContent.trim()) {
-      setError('Please paste the email content to analyze.');
+      setError(t('emailContentRequired'));
       return;
     }
     setError('');
@@ -154,38 +156,38 @@ export default function AnalysisPage({ onBack }: AnalysisPageProps) {
           onClick={onBack}
           className="flex items-center gap-1.5 text-muted hover:text-ink transition-colors text-sm"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className={`w-4 h-4 ${dir === 'rtl' ? 'rotate-180' : ''}`} />
           Back
         </button>
 
         {!auditMode && history.length > 0 && (
           <button
             onClick={() => setShowHistory(!showHistory)}
-            className="ml-auto flex items-center gap-2 text-sm text-muted hover:text-ink border border-line hover:border-line-strong px-3 py-1.5 rounded-lg transition-all"
+            className="ms-auto flex items-center gap-2 text-sm text-muted hover:text-ink border border-line hover:border-line-strong px-3 py-1.5 rounded-lg transition-all"
           >
             <Clock className="w-4 h-4" />
-            History ({history.length})
+            {t('history')} ({history.length})
           </button>
         )}
       </nav>
 
       <PageHeader
         icon={<Mail className="w-5 h-5 text-brand" />}
-        title="Email Analysis"
-        description="Paste the email details below to scan for threats"
+        title={t('emailAnalysisTitle')}
+        description={t('emailAnalysisDesc')}
       />
 
       <main className="flex-1 px-4 sm:px-6 py-6 sm:py-10">
         <div className="max-w-2xl mx-auto space-y-8">
           {auditMode && (
             <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 space-y-2">
-              <p>Audit mode: analyses are not saved in this browser and links are not sent to VirusTotal.</p>
+              <p>{t('auditEmailNotice')}</p>
               {history.length > 0 && (
                 <button
                   onClick={handleClearHistory}
                   className="text-xs font-medium text-amber-700 underline underline-offset-2 hover:text-amber-900"
                 >
-                  Delete the {history.length} saved analyses from earlier sessions
+                  {t('deleteSavedAnalyses')} ({history.length})
                 </button>
               )}
             </div>
@@ -204,14 +206,14 @@ export default function AnalysisPage({ onBack }: AnalysisPageProps) {
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-medium text-ink-2">
                 <Mail className="w-4 h-4 text-muted" />
-                Sender Email Address
+                {t('senderEmail')}
               </label>
               <input
                 type="text"
                 value={senderEmail}
                 onChange={(e) => setSenderEmail(e.target.value)}
                 placeholder="e.g. support@micr0soft.com"
-                className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-ink placeholder-faint focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all text-sm"
+                dir="ltr" className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-ink placeholder-faint focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all text-sm"
               />
             </div>
 
@@ -219,7 +221,7 @@ export default function AnalysisPage({ onBack }: AnalysisPageProps) {
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-medium text-ink-2">
                 <FileText className="w-4 h-4 text-muted" />
-                Email Content
+                {t('emailContent')}
                 <span className="text-red-700">*</span>
               </label>
               <textarea
@@ -228,7 +230,7 @@ export default function AnalysisPage({ onBack }: AnalysisPageProps) {
                   setEmailContent(e.target.value);
                   if (error) setError('');
                 }}
-                placeholder="Paste the full email content here..."
+                placeholder={t('emailContentPlaceholder')}
                 rows={10}
                 className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-ink placeholder-faint focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all text-sm resize-none leading-relaxed"
               />
@@ -248,8 +250,8 @@ export default function AnalysisPage({ onBack }: AnalysisPageProps) {
               >
                 <span className="flex items-center gap-2">
                   <Code2 className="w-4 h-4" />
-                  Email Headers
-                  <span className="text-xs text-faint font-normal">optional — paste raw headers for deeper analysis</span>
+                  {t('emailHeaders')}
+                  <span className="text-xs text-faint font-normal">{t('emailHeadersOptional')}</span>
                 </span>
                 {showHeaders ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </button>
@@ -261,7 +263,7 @@ export default function AnalysisPage({ onBack }: AnalysisPageProps) {
                     onChange={(e) => setRawHeaders(e.target.value)}
                     placeholder={`Received: from mail.example.com...\nFrom: sender@example.com\nReply-To: other@suspicious.com\nAuthentication-Results: dkim=fail\n...`}
                     rows={8}
-                    className="w-full bg-canvas border border-line-strong rounded-lg px-4 py-3 text-ink-2 placeholder-faint focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all text-xs font-mono resize-none leading-relaxed"
+                    dir="ltr" className="w-full bg-canvas border border-line-strong rounded-lg px-4 py-3 text-ink-2 placeholder-faint focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all text-xs font-mono resize-none leading-relaxed"
                   />
                 </div>
               )}
@@ -277,7 +279,7 @@ export default function AnalysisPage({ onBack }: AnalysisPageProps) {
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Analyzing...
+                    {t('analyzing')}
                   </>
                 ) : (
                   <>
@@ -301,7 +303,7 @@ export default function AnalysisPage({ onBack }: AnalysisPageProps) {
           {result && (
             <div className="border-t border-line pt-8 space-y-5">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-ink">Analysis Results</h3>
+                <h3 className="text-lg font-semibold text-ink">{t('analysisResults')}</h3>
                 <div className="flex items-center gap-3">
                 {auditMode && (
                   <label className="flex items-center gap-1.5 text-xs text-muted">
@@ -314,11 +316,11 @@ export default function AnalysisPage({ onBack }: AnalysisPageProps) {
                   className="flex items-center gap-2 text-sm text-muted hover:text-ink border border-line hover:border-line-strong px-3 py-1.5 rounded-lg transition-all"
                 >
                   {copied ? (
-                    <span className="text-emerald-700">✓ Copied!</span>
+                    <span className="text-emerald-700">✓ {t('copied')}</span>
                   ) : (
                     <>
                       <FileText className="w-3.5 h-3.5" />
-                      Copy Report
+                      {t('copyReport')}
                     </>
                   )}
                 </button>

@@ -9,14 +9,32 @@ import type { HttpHeadersData } from '../utils/httpHeadersScore';
 import { buildReport, formatDateHe, type Report, type ReportFinding } from '../utils/report';
 import { EFFORT_HE, OWNER_HE, SEVERITY_HE } from '../utils/reportHe';
 import { SEVERITY_STYLE } from '../utils/findingsStyle';
+import { useLanguage } from '../i18n';
 
-const AUDITOR_KEY = 'itsa_report_auditor';
+const PROFILE_KEY = 'itsa_consultant_profile';
 
-function loadAuditor(): string {
+interface ConsultantProfile {
+  name: string;
+  phone: string;
+  email: string;
+  website: string;
+}
+
+function loadProfile(): ConsultantProfile {
+  const fallback = { name: 'Samuel', phone: '', email: '', website: '' };
   try {
-    return localStorage.getItem(AUDITOR_KEY) ?? '';
+    const raw = localStorage.getItem(PROFILE_KEY);
+    return raw ? { ...fallback, ...JSON.parse(raw) } : fallback;
   } catch {
-    return '';
+    return fallback;
+  }
+}
+
+function saveProfile(profile: ConsultantProfile): void {
+  try {
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+  } catch {
+    // Contact details are a convenience only.
   }
 }
 
@@ -44,7 +62,8 @@ export default function ReportPage() {
   const session = useAuditSession();
   const [domain, setDomain] = useState(session.domain);
   const [clientName, setClientName] = useState(session.clientName);
-  const [auditor, setAuditor] = useState(loadAuditor);
+  const [profile, setProfile] = useState<ConsultantProfile>(loadProfile);
+  const { t } = useLanguage();
   const [running, setRunning] = useState(false);
   const [error, setError] = useState('');
 
@@ -54,23 +73,22 @@ export default function ReportPage() {
   const missing = !domainAudit || !httpHeaders;
 
   const report = useMemo(
-    () => buildReport({ clientName, auditor, domain, date: new Date(), domainAudit, httpHeaders }),
-    [clientName, auditor, domain, domainAudit, httpHeaders],
+    () => buildReport({ clientName, auditor: profile.name, domain, date: new Date(), domainAudit, httpHeaders }),
+    [clientName, profile.name, domain, domainAudit, httpHeaders],
   );
 
-  function saveAuditor(v: string) {
-    setAuditor(v);
-    try {
-      localStorage.setItem(AUDITOR_KEY, v);
-    } catch {
-      // not essential
-    }
+  function updateProfile(patch: Partial<ConsultantProfile>) {
+    setProfile((current) => {
+      const next = { ...current, ...patch };
+      saveProfile(next);
+      return next;
+    });
   }
 
   async function runChecks() {
     const d = domain.trim();
     if (!d) {
-      setError('Enter the client’s domain first.');
+      setError(t('domainFirst'));
       return;
     }
     setError('');
@@ -84,11 +102,11 @@ export default function ReportPage() {
       const patch: Parameters<typeof updateSession>[0] = {};
       if (a) {
         if (a.ok && a.data && 'mx' in a.data) patch.domainAudit = a.data;
-        else setError(apiErrorOf(a) ?? 'The email check did not finish.');
+        else setError(apiErrorOf(a) ?? t('auditFailed'));
       }
       if (h) {
         if (h.ok && h.data && 'https' in h.data) patch.httpHeaders = h.data;
-        else setError(apiErrorOf(h) ?? 'The website check did not finish.');
+        else setError(apiErrorOf(h) ?? t('httpFailed'));
       }
       const resolved = patch.domainAudit?.domain ?? patch.httpHeaders?.domain;
       if (resolved) {
@@ -97,7 +115,7 @@ export default function ReportPage() {
       }
       updateSession(patch);
     } catch (err) {
-      setError(errorMessage(err, 'Could not reach the server. Check your connection and try again.'));
+      setError(errorMessage(err, t('serverFailed')));
     } finally {
       setRunning(false);
     }
@@ -110,23 +128,35 @@ export default function ReportPage() {
       <div className="no-print">
         <PageHeader
           icon={<FileText className="w-5 h-5" />}
-          title="Client report"
-          description="A Hebrew report for the business owner, built from the email and website checks. Print it or save it as PDF."
+          title={t('reportTitle')}
+          description={t('reportDesc')}
         />
 
         <div className="max-w-2xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="space-y-1.5 text-sm font-medium text-ink-2">
-              Client name
+              {t('clientName')}
               <input className={field} value={clientName} onChange={(e) => { setClientName(e.target.value); updateSession({ clientName: e.target.value }); }} placeholder="Example Shop Ltd" />
             </label>
             <label className="space-y-1.5 text-sm font-medium text-ink-2">
-              Domain
+              {t('domain')}
               <input className={field} value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="company.co.il" spellCheck={false} />
             </label>
-            <label className="space-y-1.5 text-sm font-medium text-ink-2 sm:col-span-2">
-              Prepared by (name and contact, shown on the report)
-              <input className={field} value={auditor} onChange={(e) => saveAuditor(e.target.value)} placeholder="Samuel — 050-000-0000" />
+            <label className="space-y-1.5 text-sm font-medium text-ink-2">
+              {t('consultantName')}
+              <input className={field} value={profile.name} onChange={(e) => updateProfile({ name: e.target.value })} placeholder="Samuel" />
+            </label>
+            <label className="space-y-1.5 text-sm font-medium text-ink-2">
+              {t('phone')}
+              <input dir="ltr" className={field} value={profile.phone} onChange={(e) => updateProfile({ phone: e.target.value })} placeholder="050-000-0000" />
+            </label>
+            <label className="space-y-1.5 text-sm font-medium text-ink-2">
+              {t('email')}
+              <input dir="ltr" type="email" className={field} value={profile.email} onChange={(e) => updateProfile({ email: e.target.value })} placeholder="samuel@example.com" />
+            </label>
+            <label className="space-y-1.5 text-sm font-medium text-ink-2">
+              {t('website')}
+              <input dir="ltr" className={field} value={profile.website} onChange={(e) => updateProfile({ website: e.target.value })} placeholder="example.com" />
             </label>
           </div>
 
@@ -138,7 +168,7 @@ export default function ReportPage() {
                 className="inline-flex items-center gap-2 bg-brand hover:bg-brand-strong disabled:bg-brand/50 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors"
               >
                 {running ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                {domainAudit || httpHeaders ? 'Run the missing check' : 'Run both checks'}
+                {domainAudit || httpHeaders ? t('runMissing') : t('runBoth')}
               </button>
             )}
             <button
@@ -149,24 +179,24 @@ export default function ReportPage() {
               }`}
             >
               <Printer className="w-4 h-4" />
-              Print or save as PDF
+              {t('printPdf')}
             </button>
           </div>
           {error && <p className="text-sm text-red-700" role="alert">{error}</p>}
           <p className="text-xs text-muted">
-            {domainAudit ? '✓ Email check included' : '– Email check not run yet'} · {httpHeaders ? '✓ Website check included' : '– Website check not run yet'}.
-            In the print window, choose “Save as PDF” as the destination.
+            {domainAudit ? `✓ ${t('emailIncluded')}` : `– ${t('emailNotRun')}`} · {httpHeaders ? `✓ ${t('webIncluded')}` : `– ${t('webNotRun')}`}.
+            {t('savePdfHint')}
           </p>
         </div>
       </div>
 
       {report ? (
         <div className="px-4 sm:px-8 pb-12">
-          <ReportDocument report={report} />
+          <ReportDocument report={report} profile={profile} />
         </div>
       ) : (
         <p className="no-print max-w-2xl mx-auto px-4 sm:px-8 text-sm text-muted">
-          The report appears here once at least one check has run for this domain.
+          {t('reportEmpty')}
         </p>
       )}
     </div>
@@ -190,7 +220,7 @@ function Problem({ r }: { r: ReportFinding }) {
   );
 }
 
-function ReportDocument({ report }: { report: Report }) {
+function ReportDocument({ report, profile }: { report: Report; profile: ConsultantProfile }) {
   const { input, overall, sections, problems, good, topRisks, thisWeek } = report;
   const client = input.clientName.trim() || input.domain;
 
@@ -200,19 +230,39 @@ function ReportDocument({ report }: { report: Report }) {
       lang="he"
       className="print-area mx-auto max-w-[210mm] bg-surface border border-line rounded-xl shadow-sm print:shadow-none print:border-0 print:rounded-none px-8 sm:px-12 py-10 text-[13.5px] leading-relaxed text-ink"
     >
-      {/* Cover and summary */}
-      <header className="flex items-start justify-between gap-6 pb-6 border-b-2 border-ink">
+      {/* Professional cover page */}
+      <section className="min-h-[240mm] flex flex-col justify-between print:break-after-page">
         <div>
-          <p className="text-sm text-muted">דוח בדיקת אבטחת מידע</p>
-          <h1 className="text-3xl font-bold tracking-tight mt-1">{client}</h1>
-          <p className="text-ink-2 mt-1" dir="ltr" style={{ textAlign: 'right' }}>{input.domain}</p>
-        </div>
-        <div className="text-sm text-ink-2 text-left shrink-0">
-          <p>{formatDateHe(input.date)}</p>
-          {input.auditor && <p className="mt-1">הוכן על ידי: {input.auditor}</p>}
-        </div>
-      </header>
+          <div className="flex items-center justify-between gap-6">
+            <div className="w-16 h-16 rounded-2xl bg-brand text-white flex items-center justify-center text-2xl font-bold" aria-hidden="true">
+              {(profile.name.trim() || 'S').slice(0, 1).toUpperCase()}
+            </div>
+            <p className="text-sm text-muted">{formatDateHe(input.date)}</p>
+          </div>
 
+          <div className="mt-20">
+            <p className="text-sm font-semibold text-brand">דוח בדיקת אבטחת מידע</p>
+            <h1 className="text-4xl font-bold tracking-tight mt-3">{client}</h1>
+            <p className="text-xl text-ink-2 mt-2" dir="ltr" style={{ textAlign: 'right' }}>{input.domain}</p>
+            <div className="mt-8 h-1 w-24 bg-brand rounded-full" />
+          </div>
+        </div>
+
+        <div className="border-t border-line pt-6">
+          <p className="text-xs text-muted mb-2">הוכן על ידי</p>
+          <p className="text-2xl font-bold text-ink">{profile.name.trim() || 'Samuel'}</p>
+          <div className="mt-3 space-y-1 text-sm text-ink-2" dir="ltr" style={{ textAlign: 'right' }}>
+            {profile.phone && <p>{profile.phone}</p>}
+            {profile.email && <p>{profile.email}</p>}
+            {profile.website && <p>{profile.website}</p>}
+          </div>
+          <p className="mt-8 text-xs text-muted">
+            בדיקה חיצונית המבוססת על מידע ציבורי בלבד. אין בדוח זה התחייבות לעמידה בתקן או בדרישה רגולטורית.
+          </p>
+        </div>
+      </section>
+
+      {/* Summary */}
       <section className="py-6 border-b border-line break-inside-avoid">
         <div className="flex items-center gap-6">
           <GradeBadge grade={overall.grade} />

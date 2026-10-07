@@ -2,6 +2,7 @@ import { AlertTriangle, AlertCircle, CheckCircle, XCircle, ShieldCheck, Lightbul
 import { AnalysisResult } from '../utils/emailAnalyzer';
 import { HeaderAnalysisResult } from '../utils/headerAnalyzer';
 import { VTUrlResult } from '../utils/virusTotalApi';
+import { useLanguage } from '../i18n';
 
 interface RiskResultsProps {
   result: AnalysisResult;
@@ -38,6 +39,7 @@ const levelConfig = {
 };
 
 export default function RiskResults({ result, headerResult, vtResults, vtLoading }: RiskResultsProps) {
+  const { t } = useLanguage();
   const config = levelConfig[result.level];
   const hasIssues = result.issues[0] !== 'No specific threats detected';
 
@@ -49,7 +51,7 @@ export default function RiskResults({ result, headerResult, vtResults, vtLoading
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             {config.icon}
-            <span className={`font-bold text-lg ${config.color}`}>{config.label}</span>
+            <span className={`font-bold text-lg ${config.color}`}>{result.level === 'Low' ? t('lowRisk') : result.level === 'Medium' ? t('mediumRisk') : t('highRisk')}</span>
           </div>
           <span className={`text-3xl font-bold ${config.color}`}>{result.score}</span>
         </div>
@@ -61,16 +63,16 @@ export default function RiskResults({ result, headerResult, vtResults, vtLoading
         </div>
         <div className="flex justify-between text-xs text-muted mt-1">
           <span>0</span>
-          <span>Risk Score</span>
+          <span>{t('riskScore')}</span>
           <span>100</span>
         </div>
       </div>
 
-      {/* Detected Issues */}
+      {/* {t('detectedIssues')} */}
       <div className="bg-surface border border-line rounded-xl p-5 space-y-3">
         <div className="flex items-center gap-2 text-ink-2 font-semibold text-sm">
           <ShieldCheck className="w-4 h-4 text-muted" />
-          Detected Issues
+          {t('detectedIssues')}
         </div>
         <ul className="space-y-2">
           {result.issues.map((issue, i) => (
@@ -86,12 +88,12 @@ export default function RiskResults({ result, headerResult, vtResults, vtLoading
         </ul>
       </div>
 
-      {/* Suspicious Attachments */}
+      {/* {t('suspiciousAttachments')} */}
       {result.suspiciousAttachments && result.suspiciousAttachments.length > 0 && (
         <div className="bg-surface border border-line rounded-xl p-5 space-y-3">
           <div className="flex items-center gap-2 text-ink-2 font-semibold text-sm">
             <Paperclip className="w-4 h-4 text-red-700" />
-            Suspicious Attachments
+            {t('suspiciousAttachments')}
           </div>
           <ul className="space-y-3">
             {result.suspiciousAttachments.map((att, i) => (
@@ -109,12 +111,12 @@ export default function RiskResults({ result, headerResult, vtResults, vtLoading
         </div>
       )}
 
-      {/* Suspicious URLs */}
+      {/* {t('suspiciousUrls')} */}
       {result.suspiciousUrls.length > 0 && (
         <div className="bg-surface border border-line rounded-xl p-5 space-y-3">
           <div className="flex items-center gap-2 text-ink-2 font-semibold text-sm">
             <Link2 className="w-4 h-4 text-orange-700" />
-            Suspicious URLs
+            {t('suspiciousUrls')}
           </div>
           <ul className="space-y-3">
             {result.suspiciousUrls.map((urlDetection, i) => (
@@ -132,13 +134,13 @@ export default function RiskResults({ result, headerResult, vtResults, vtLoading
         </div>
       )}
 
-      {/* Header Analysis */}
+      {/* {t('headerAnalysis')} */}
       {headerResult && (
         <div className="bg-surface border border-line rounded-xl p-5 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-ink-2 font-semibold text-sm">
               <Code2 className="w-4 h-4 text-indigo-700" />
-              Header Analysis
+              {t('headerAnalysis')}
             </div>
             <span className={`text-xs font-bold px-2 py-1 rounded-lg border ${
               headerResult.score >= 40
@@ -154,7 +156,7 @@ export default function RiskResults({ result, headerResult, vtResults, vtLoading
           {headerResult.detections.length === 0 ? (
             <div className="flex items-center gap-2 text-sm text-emerald-700">
               <CheckCircle className="w-4 h-4 shrink-0" />
-              No suspicious header patterns detected
+              {t('noSuspiciousHeaders')}
             </div>
           ) : (
             <ul className="space-y-3">
@@ -189,12 +191,12 @@ export default function RiskResults({ result, headerResult, vtResults, vtLoading
         <div className="bg-surface border border-line rounded-xl p-5 space-y-3">
           <div className="flex items-center gap-2 text-ink-2 font-semibold text-sm">
             <ShieldAlert className="w-4 h-4 text-violet-700" />
-            VirusTotal Scan
+            {t('vtScan')}
             {vtLoading && <Loader2 className="w-3.5 h-3.5 animate-spin text-violet-700 ml-1" />}
           </div>
 
           {vtLoading && !vtResults && (
-            <p className="text-muted text-sm">Scanning URLs with VirusTotal...</p>
+            <p className="text-muted text-sm">{t('scanningUrls')}</p>
           )}
 
           {vtResults && (
@@ -219,17 +221,17 @@ export default function RiskResults({ result, headerResult, vtResults, vtLoading
                         )}
                         <span className={`text-sm font-medium ${isMalicious ? 'text-red-700' : isClean ? 'text-emerald-700' : 'text-amber-700'}`}>
                           {vt.status === 'error' || vt.status === 'unknown'
-                            ? vt.errorMessage ?? 'Unknown'
+                            ? vt.errorMessage ?? t('unknown')
                             : isMalicious
-                            ? `Malicious — ${vt.malicious} engine(s) flagged`
+                            ? `${t('malicious')} — ${vt.malicious} ${t('engines')}`
                             : vt.suspicious > 0
-                            ? `Suspicious — ${vt.suspicious} engine(s) flagged`
-                            : 'Clean'}
+                            ? `${t('suspicious')} — ${vt.suspicious} ${t('engines')}`
+                            : t('clean')}
                         </span>
                       </div>
                       {vt.total > 0 && (
                         <span className="text-xs text-muted shrink-0">
-                          {vt.malicious + vt.suspicious}/{vt.total} engines
+                          {vt.malicious + vt.suspicious}/{vt.total} {t('engines')}
                         </span>
                       )}
                     </div>
@@ -241,20 +243,20 @@ export default function RiskResults({ result, headerResult, vtResults, vtLoading
         </div>
       )}
 
-      {/* Explanation */}
+      {/* {t('explanation')} */}
       <div className="bg-surface border border-line rounded-xl p-5 space-y-3">
         <div className="flex items-center gap-2 text-ink-2 font-semibold text-sm">
           <AlertCircle className="w-4 h-4 text-muted" />
-          Explanation
+          {t('explanation')}
         </div>
         <p className="text-muted text-sm leading-relaxed">{result.explanation}</p>
       </div>
 
-      {/* Recommendations */}
+      {/* {t('recommendations')} */}
       <div className="bg-surface border border-line rounded-xl p-5 space-y-3">
         <div className="flex items-center gap-2 text-ink-2 font-semibold text-sm">
           <Lightbulb className="w-4 h-4 text-brand" />
-          Recommendations
+          {t('recommendations')}
         </div>
         <ul className="space-y-2">
           {result.recommendations.map((rec, i) => (
