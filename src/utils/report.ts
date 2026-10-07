@@ -2,7 +2,7 @@
 
 import { gradeFor, SEVERITY_ORDER, type Finding, type Grade, type Score } from './findings';
 import { scoreDomain, type DomainAuditData } from './domainScore';
-import { scoreHttpHeaders, type HttpHeadersData } from './httpHeadersScore';
+import { isHttpHeadersInconclusive, scoreHttpHeaders, type HttpHeadersData } from './httpHeadersScore';
 import { heText, type HeText } from './reportHe';
 
 export interface ReportInput {
@@ -27,7 +27,8 @@ export interface ReportSection {
 
 export interface Report {
   input: ReportInput;
-  overall: { score: number; grade: Grade };
+  overall: { score: number; grade: Grade } | null;
+  webInconclusive: boolean;
   sections: ReportSection[];
   /** Problems only, most severe first, then easiest first. */
   problems: ReportFinding[];
@@ -48,19 +49,23 @@ function byPriority(a: ReportFinding, b: ReportFinding): number {
 
 export function buildReport(input: ReportInput): Report | null {
   const sections: ReportSection[] = [];
+  const webInconclusive = !!input.httpHeaders && isHttpHeadersInconclusive(input.httpHeaders);
   if (input.domainAudit) sections.push({ key: 'email', score: scoreDomain(input.domainAudit) });
-  if (input.httpHeaders) sections.push({ key: 'web', score: scoreHttpHeaders(input.httpHeaders) });
-  if (sections.length === 0) return null;
+  if (input.httpHeaders && !webInconclusive) sections.push({ key: 'web', score: scoreHttpHeaders(input.httpHeaders) });
+  if (!input.domainAudit && !input.httpHeaders) return null;
 
   const all: ReportFinding[] = sections.flatMap((s) => s.score.findings.map((finding) => ({ finding, he: heText(finding), section: s.key })));
   const problems = all.filter((r) => r.finding.severity !== 'ok').sort(byPriority);
   const good = all.filter((r) => r.finding.severity === 'ok');
 
-  const score = Math.round(sections.reduce((sum, s) => sum + s.score.score, 0) / sections.length);
+  const score = sections.length > 0
+    ? Math.round(sections.reduce((sum, s) => sum + s.score.score, 0) / sections.length)
+    : null;
 
   return {
     input,
-    overall: { score, grade: gradeFor(score) },
+    overall: score === null ? null : { score, grade: gradeFor(score) },
+    webInconclusive,
     sections,
     problems,
     good,

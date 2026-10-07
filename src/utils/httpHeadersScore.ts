@@ -11,6 +11,11 @@ export interface HttpHeadersData {
 
 const SIX_MONTHS = 15_552_000;
 
+/** True when neither HTTP nor HTTPS produced a response, so website security cannot be evaluated. */
+export function isHttpHeadersInconclusive(d: HttpHeadersData): boolean {
+  return !d.https.ok && d.https.status === null && d.http.status === null;
+}
+
 export function hstsMaxAge(value: string): number | null {
   const m = /max-age\s*=\s*"?(\d+)"?/i.exec(value);
   return m ? Number(m[1]) : null;
@@ -30,12 +35,18 @@ export function scoreHttpHeaders(d: HttpHeadersData): Score {
   const h = d.https.headers;
   const f: Finding[] = [];
 
+  if (isHttpHeadersInconclusive(d)) {
+    // No HTTP response at all: there may simply be no public website.
+    // This is a measurement failure / not-applicable case, not a vulnerability.
+    return toScore([]);
+  }
+
   if (!d.https.ok) {
     f.push({
       id: 'https-unreachable', control: 'HTTPS', severity: 'critical', penalty: 40,
-      title: 'The website does not answer over HTTPS',
-      impact: 'Visitors either get an error or use an unencrypted connection that anyone on the network can read or alter.',
-      recommendation: 'Install a TLS certificate (free with Let’s Encrypt or the host’s panel) and serve the site over HTTPS.',
+      title: 'The website answers over HTTP but not HTTPS',
+      impact: 'A public web service is reachable without encryption, but no working HTTPS endpoint was detected.',
+      recommendation: 'Enable HTTPS with a valid TLS certificate and redirect HTTP traffic to HTTPS.',
       detail: d.https.error ?? (d.https.status ? `HTTP status ${d.https.status}` : undefined),
     });
     // Without an HTTPS answer the other headers cannot be judged.

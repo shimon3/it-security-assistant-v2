@@ -5,7 +5,7 @@ import { GradeBadge } from '../components/AuditResult';
 import { apiPost, apiErrorOf, errorMessage } from '../utils/apiClient';
 import { updateSession, useAuditSession } from '../utils/auditSession';
 import type { DomainAuditData } from '../utils/domainScore';
-import type { HttpHeadersData } from '../utils/httpHeadersScore';
+import { isHttpHeadersInconclusive, type HttpHeadersData } from '../utils/httpHeadersScore';
 import { buildReport, formatDateHe, type Report, type ReportFinding } from '../utils/report';
 import { EFFORT_HE, OWNER_HE, SEVERITY_HE } from '../utils/reportHe';
 import { SEVERITY_STYLE } from '../utils/findingsStyle';
@@ -71,6 +71,7 @@ export default function ReportPage() {
   const domainAudit = sameDomain(session.domainAudit) ? session.domainAudit : null;
   const httpHeaders = sameDomain(session.httpHeaders) ? session.httpHeaders : null;
   const missing = !domainAudit || !httpHeaders;
+  const webInconclusive = httpHeaders ? isHttpHeadersInconclusive(httpHeaders) : false;
 
   const report = useMemo(
     () => buildReport({ clientName, auditor: profile.name, domain, date: new Date(), domainAudit, httpHeaders }),
@@ -184,7 +185,7 @@ export default function ReportPage() {
           </div>
           {error && <p className="text-sm text-red-700" role="alert">{error}</p>}
           <p className="text-xs text-muted">
-            {domainAudit ? `✓ ${t('emailIncluded')}` : `– ${t('emailNotRun')}`} · {httpHeaders ? `✓ ${t('webIncluded')}` : `– ${t('webNotRun')}`}.
+            {domainAudit ? `✓ ${t('emailIncluded')}` : `– ${t('emailNotRun')}`} · {httpHeaders ? (webInconclusive ? `– ${t('webInconclusive')}` : `✓ ${t('webIncluded')}`) : `– ${t('webNotRun')}`}.
             {t('savePdfHint')}
           </p>
         </div>
@@ -221,7 +222,7 @@ function Problem({ r }: { r: ReportFinding }) {
 }
 
 function ReportDocument({ report, profile }: { report: Report; profile: ConsultantProfile }) {
-  const { input, overall, sections, problems, good, topRisks, thisWeek } = report;
+  const { input, overall, webInconclusive, sections, problems, good, topRisks, thisWeek } = report;
   const client = input.clientName.trim() || input.domain;
 
   return (
@@ -265,12 +266,16 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
       {/* Summary */}
       <section className="py-6 border-b border-line break-inside-avoid">
         <div className="flex items-center gap-6">
-          <GradeBadge grade={overall.grade} />
+          {overall ? (
+            <GradeBadge grade={overall.grade} />
+          ) : (
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border-[3px] border-amber-300 bg-amber-50 text-xl font-bold text-amber-800">N/A</div>
+          )}
           <div>
             <p className="text-sm text-muted">ציון כולל</p>
-            <p className="text-3xl font-bold">{overall.score} / 100</p>
+            <p className="text-3xl font-bold">{overall ? `${overall.score} / 100` : 'לא רלוונטי'}</p>
             <p className="text-ink-2">
-              {problems.length === 0 ? 'לא נמצאו בעיות.' : `נמצאו ${problems.length} נקודות לשיפור, מתוכן ${problems.filter((p) => ['critical', 'high'].includes(p.finding.severity)).length} בחומרה גבוהה.`}
+              {problems.length === 0 ? 'לא נמצאו בעיות שניתן לדרג.' : `נמצאו ${problems.length} נקודות לשיפור, מתוכן ${problems.filter((p) => ['critical', 'high'].includes(p.finding.severity)).length} בחומרה גבוהה.`}
             </p>
           </div>
           <div className="ms-auto flex gap-6">
@@ -280,8 +285,20 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
                 <p className="text-xs text-muted mt-1.5 max-w-[7rem]">{SECTION_HE[s.key]}</p>
               </div>
             ))}
+            {webInconclusive && (
+              <div className="text-center">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl border-2 border-amber-300 bg-amber-50 text-sm font-bold text-amber-800">N/A</div>
+                <p className="text-xs text-muted mt-1.5 max-w-[7rem]">{SECTION_HE.web}</p>
+              </div>
+            )}
           </div>
         </div>
+        {webInconclusive && (
+          <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-amber-900">
+            <p className="font-semibold">בדיקת האתר לא הושלמה</p>
+            <p className="mt-1 text-sm">לא התקבלה תגובה ב-HTTP או ב-HTTPS. ייתכן שאין אתר ציבורי לדומיין, ולכן בדיקת HTTPS וכותרות האבטחה לא נכללת בציון.</p>
+          </div>
+        )}
 
         {topRisks.length > 0 && (
           <div className="mt-6">
@@ -385,7 +402,7 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
               {input.httpHeaders.https.chain.map((h) => <p key={h.url} className="break-all">{h.status} {h.url}</p>)}
               {input.httpHeaders.https.error && <p>HTTPS: {input.httpHeaders.https.error}</p>}
               {Object.entries(input.httpHeaders.https.headers).map(([k, v]) => <p key={k} className="break-all">{k}: {v}</p>)}
-              {Object.keys(input.httpHeaders.https.headers).length === 0 && <p>No security headers received.</p>}
+              {Object.keys(input.httpHeaders.https.headers).length === 0 && <p>{isHttpHeadersInconclusive(input.httpHeaders) ? 'Security headers: not evaluated.' : 'No security headers detected.'}</p>}
             </div>
           )}
         </div>
