@@ -27,6 +27,15 @@ describe('internal SMB audit scoring', () => {
     expect(s.findings[0].severity).toBe('medium');
   });
 
+  it('keeps the consultant observation on the generated finding', () => {
+    const d = emptyInternalAudit();
+    d.answers.mfa = 'no';
+    d.observations.mfa = 'Admin accounts are not covered by MFA.';
+
+    const s = scoreInternalAudit(d);
+    expect(s.findings[0].detail).toBe('Admin accounts are not covered by MFA.');
+  });
+
   it('gives 100 when every assessed control is in place', () => {
     const d = emptyInternalAudit();
     d.answers.mfa = 'yes';
