@@ -36,6 +36,26 @@ describe('internal SMB audit scoring', () => {
     expect(s.findings[0].detail).toBe('Admin accounts are not covered by MFA.');
   });
 
+  it('stores evidence status separately from the security answer', () => {
+    const d = emptyInternalAudit();
+    d.answers.mfa = 'yes';
+    d.evidence.mfa = 'verified';
+
+    const before = scoreInternalAudit(d);
+    d.evidence.mfa = 'client';
+    const after = scoreInternalAudit(d);
+
+    expect(before.score).toBe(100);
+    expect(after.score).toBe(100);
+    expect(d.evidence.mfa).toBe('client');
+  });
+
+  it('defaults evidence status to unverified', () => {
+    const d = emptyInternalAudit();
+    expect(d.evidence.mfa).toBe('unverified');
+    expect(d.evidence.backups).toBe('unverified');
+  });
+
   it('gives 100 when every assessed control is in place', () => {
     const d = emptyInternalAudit();
     d.answers.mfa = 'yes';
