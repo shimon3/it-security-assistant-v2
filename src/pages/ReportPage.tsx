@@ -238,7 +238,7 @@ function Problem({ r, evidence }: { r: ReportFinding; evidence?: EvidenceStatus 
 }
 
 function ReportDocument({ report, profile }: { report: Report; profile: ConsultantProfile }) {
-  const { input, overall, webInconclusive, sections, problems, good, topRisks, thisWeek } = report;
+  const { input, overall, webInconclusive, sections, problems, good, topRisks, thisWeek, remediationPlan } = report;
   const client = input.clientName.trim() || input.domain;
   const internalCaps = input.internalAudit ? internalScoreCaps(input.internalAudit) : [];
 
@@ -437,6 +437,40 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
               {problems.map((r) => <Problem key={r.finding.id} r={r} evidence={r.section === 'internal' ? input.internalAudit?.evidence?.[r.finding.id.replace(/^internal-/, '').replace(/-(ok|yes|partial|no)$/, '') as keyof NonNullable<typeof input.internalAudit>['evidence']] : undefined} />)}
             </tbody>
           </table>
+        </section>
+      )}
+
+      {problems.length > 0 && (
+        <section className="py-6 border-b border-line">
+          <h2 className="text-lg font-bold mb-1">תוכנית תיקון 7 / 30 / 90 ימים</h2>
+          <p className="text-ink-2 mb-4">כל ממצא משויך לחלון זמן אחד לפי חומרה ומאמץ. מתחילים בפעולות הדחופות והמהירות ביותר.</p>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {([
+              ['7 ימים', remediationPlan.days7, 'פעולות דחופות'],
+              ['30 ימים', remediationPlan.days30, 'תיקונים חשובים'],
+              ['90 ימים', remediationPlan.days90, 'שיפורים ותכנון'],
+            ] as const).map(([label, items, subtitle]) => (
+              <div key={label} className="rounded-lg border border-line bg-sunken px-4 py-4 break-inside-avoid">
+                <p className="text-lg font-bold text-ink">{label}</p>
+                <p className="text-xs text-muted mt-0.5">{subtitle} · {items.length}</p>
+                {items.length > 0 ? (
+                  <ol className="mt-3 space-y-3">
+                    {items.map((r, i) => (
+                      <li key={r.finding.id} className="text-sm">
+                        <p className="font-semibold">{i + 1}. <He text={r.he.title} /></p>
+                        <p className="text-ink-2 mt-0.5"><He text={r.he.fix} /></p>
+                        <p className="text-xs text-muted mt-1">
+                          {SEVERITY_HE[r.finding.severity]} · <bdi>{EFFORT_HE[r.he.effort].split(' — ')[0]}</bdi> · <bdi>{OWNER_HE[r.he.owner]}</bdi>
+                        </p>
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className="mt-3 text-sm text-muted">אין פעולות בחלון זמן זה.</p>
+                )}
+              </div>
+            ))}
+          </div>
         </section>
       )}
 
