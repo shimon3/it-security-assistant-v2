@@ -44,11 +44,33 @@ describe('buildReport', () => {
     expect(r.problems.every((p) => p.finding.severity !== 'ok')).toBe(true);
   });
 
-  it('lists only easy, meaningful fixes for this week', () => {
-    const r = buildReport({ ...base, domainAudit: demoDomainAudit(base.domain), httpHeaders: demoHttpHeaders(base.domain) })!;
-    expect(r.thisWeek.length).toBeGreaterThan(0);
-    expect(r.thisWeek.length).toBeLessThanOrEqual(5);
-    expect(r.thisWeek.every((p) => p.he.effort === 'easy' && p.finding.severity !== 'low')).toBe(true);
+  it('builds a non-overlapping 7 / 30 / 90 day remediation plan', () => {
+    const internalAudit = emptyInternalAudit();
+    for (const key of Object.keys(internalAudit.answers) as Array<keyof typeof internalAudit.answers>) {
+      internalAudit.answers[key] = 'yes';
+    }
+    internalAudit.answers.mfa = 'no';
+    internalAudit.answers.filePermissions = 'partial';
+    internalAudit.answers.networkSegmentation = 'no';
+    internalAudit.answers.phishingTraining = 'no';
+
+    const r = buildReport({
+      ...base,
+      domainAudit: demoDomainAudit(base.domain),
+      httpHeaders: demoHttpHeaders(base.domain),
+      internalAudit,
+    })!;
+
+    const plan = r.remediationPlan;
+    const allPlanIds = [...plan.days7, ...plan.days30, ...plan.days90].map((x) => x.finding.id);
+    expect(allPlanIds).toHaveLength(r.problems.length);
+    expect(new Set(allPlanIds).size).toBe(allPlanIds.length);
+    expect(new Set(allPlanIds)).toEqual(new Set(r.problems.map((x) => x.finding.id)));
+    expect(plan.days7.some((x) => x.finding.id === 'internal-mfa-no')).toBe(true);
+    expect(plan.days30.some((x) => x.finding.id === 'internal-filePermissions-partial')).toBe(true);
+    expect(plan.days90.some((x) => x.finding.id === 'internal-networkSegmentation-no')).toBe(true);
+    expect(plan.days7.some((x) => x.finding.id === 'internal-phishingTraining-no')).toBe(true);
+    expect(r.thisWeek).toEqual(plan.days7.slice(0, 5));
   });
 
   it('works with a single check', () => {
