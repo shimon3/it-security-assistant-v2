@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/shimon3/it-security-assistant-v2/actions/workflows/ci.yml/badge.svg)](https://github.com/shimon3/it-security-assistant-v2/actions/workflows/ci.yml)
 
-A security toolbox for auditing small businesses: can someone send email in the company's name, are staff passwords in known breaches, is this email phishing?
+A security toolbox for auditing small businesses: can someone send email in the company's name, does the website protect its visitors, are staff passwords in known breaches, is this email phishing? Results become a Hebrew report for the business owner.
 
 **Live:** https://it-security-assistant-v2.vercel.app (online lookups need a private access token)
 
@@ -12,6 +12,8 @@ A security toolbox for auditing small businesses: can someone send email in the 
 
 | Tool | What it does | Runs where |
 | --- | --- | --- |
+| Client report (Hebrew) | Combines the email and website checks into an A4 report in Hebrew (RTL): overall grade, top three risks, fixes for this week, findings with effort, prioritised plan with who acts, technical appendix. Print or save as PDF. | Browser |
+| Website security headers | HTTPS, HTTP→HTTPS redirect, HSTS, CSP, clickjacking protection, nosniff, Referrer-Policy, Permissions-Policy, exposed software versions. Redirects followed by hand; private addresses refused (SSRF guard). | Edge function |
 | Domain Email Security | Grades a domain A–E from its public DNS: SPF (incl. the 10-lookup limit), DMARC, DKIM, DNSSEC, MTA-STS, TLS-RPT. Each finding has a plain-language impact and a fix. | Edge function, DNS-over-HTTPS |
 | Email Analysis | Phishing score for a pasted email: urgency wording, look-alike domains, Israeli bank impersonation, premium-rate numbers, risky attachments. | Browser |
 | Header Analyzer | SPF/DKIM/DMARC results, Reply-To and Message-ID mismatches in raw headers. | Browser |
@@ -19,6 +21,12 @@ A security toolbox for auditing small businesses: can someone send email in the 
 | Password Strength | Entropy, common-password list, time to crack. | Browser |
 | QR Code Scanner, Encoder/Decoder | Decode QR codes from an image or camera; Base64, URL, hex. | Browser |
 | URL / Hash / IP / Domain reputation, SSL check | VirusTotal and SSL Labs lookups. **Personal use only** (see audit mode). | Edge functions |
+
+## Demo mode
+
+“Try the demo” on the home page answers every online check with made-up data for a fictional shop, without the access token or any server call. Useful in front of a prospect.
+
+![Client report in Hebrew](docs/client-report.png)
 
 ## Audit mode
 
@@ -40,7 +48,7 @@ The **Data & Privacy** page lists what each tool sends where, and what is kept.
 
 ## Stack
 
-React 18, TypeScript, Vite, Tailwind CSS · Vercel Edge Functions · Vitest · GitHub Actions.
+React 18, TypeScript, Vite, Tailwind CSS, IBM Plex (self-hosted) · Vercel Edge Functions · Vitest · GitHub Actions.
 
 ## Run locally
 

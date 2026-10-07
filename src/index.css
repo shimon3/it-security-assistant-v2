@@ -1,20 +1,106 @@
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-sans/700.css';
+@import '@fontsource/ibm-plex-sans-hebrew/400.css';
+@import '@fontsource/ibm-plex-sans-hebrew/600.css';
+@import '@fontsource/ibm-plex-sans-hebrew/700.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Light theme. Values are "R G B" so Tailwind opacity modifiers work (bg-brand/20). */
+:root {
+  --canvas: 242 245 244;      /* #F2F5F4 mist */
+  --surface: 255 255 255;     /* #FFFFFF */
+  --sunken: 233 239 237;      /* #E9EFED */
+  --line: 213 222 219;        /* #D5DEDB */
+  --line-strong: 184 198 194; /* #B8C6C2 */
+  --ink: 19 42 44;            /* #132A2C petrol ink */
+  --ink-2: 47 69 71;          /* #2F4547 */
+  --muted: 91 111 112;        /* #5B6F70 */
+  --faint: 132 149 150;       /* #849596 */
+  --brand: 10 107 112;        /* #0A6B70 petrol */
+  --brand-strong: 7 84 88;    /* #075458 */
+  --brand-soft: 222 239 238;  /* #DEEFEE */
+  color-scheme: light;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-canvas text-ink font-sans antialiased;
+    font-feature-settings: 'tnum' 0;
+  }
+  :focus-visible {
+    outline: 2px solid rgb(var(--brand));
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: rgb(var(--brand) / 0.18);
+  }
+}
+
 @layer utilities {
   .animate-fade-in {
-    animation: fadeIn 0.4s ease-out both;
+    animation: fadeIn 0.3s ease-out both;
   }
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in {
+    animation: none;
+  }
+  * {
+    transition-duration: 0ms !important;
+  }
+}
+
+/* Client report: only the report itself is printed, on A4. */
+@page {
+  size: A4;
+  margin: 14mm 12mm;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff !important;
+  }
+  .no-print,
+  aside,
+  [role='dialog'] {
+    display: none !important;
+  }
+  .print-area {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 11pt;
+  }
+  .print-area * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .break-inside-avoid {
+    break-inside: avoid;
+  }
+  .print-area h2 {
+    break-after: avoid;
   }
 }

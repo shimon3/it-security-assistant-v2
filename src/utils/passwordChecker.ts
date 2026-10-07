@@ -47,7 +47,7 @@ function formatTimeToCrack(entropy: number): string {
 
 export function checkPasswordStrength(password: string): PasswordResult {
   if (!password) {
-    return { score: 0, label: 'Very Weak', entropy: 0, timeToCrack: 'Instantly', feedback: [], color: 'text-red-400', barColor: 'bg-red-500' };
+    return { score: 0, label: 'Very Weak', entropy: 0, timeToCrack: 'Instantly', feedback: [], color: 'text-red-700', barColor: 'bg-red-500' };
   }
 
   const feedback: string[] = [];
@@ -56,7 +56,7 @@ export function checkPasswordStrength(password: string): PasswordResult {
   // Common password check
   if (COMMON_PASSWORDS.has(password.toLowerCase())) {
     feedback.push('This is one of the most common passwords — never use it');
-    return { score: 0, label: 'Very Weak', entropy: calcEntropy(password), timeToCrack: 'Instantly', feedback, color: 'text-red-400', barColor: 'bg-red-500' };
+    return { score: 0, label: 'Very Weak', entropy: calcEntropy(password), timeToCrack: 'Instantly', feedback, color: 'text-red-700', barColor: 'bg-red-500' };
   }
 
   // Length scoring
@@ -107,8 +107,8 @@ export function checkPasswordStrength(password: string): PasswordResult {
   const score = rawScore as 0 | 1 | 2 | 3 | 4;
 
   const labels: PasswordResult['label'][] = ['Very Weak', 'Weak', 'Fair', 'Strong', 'Very Strong'];
-  const colors = ['text-red-400', 'text-orange-400', 'text-amber-400', 'text-emerald-400', 'text-sky-400'];
-  const barColors = ['bg-red-500', 'bg-orange-500', 'bg-amber-500', 'bg-emerald-500', 'bg-sky-500'];
+  const colors = ['text-red-700', 'text-orange-700', 'text-amber-700', 'text-emerald-700', 'text-brand'];
+  const barColors = ['bg-red-500', 'bg-orange-500', 'bg-amber-500', 'bg-emerald-500', 'bg-brand'];
 
   return {
     score,

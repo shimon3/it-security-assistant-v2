@@ -1,5 +1,8 @@
 // Calls to the app's own /api routes, with the personal access token.
 // The token is typed by the user and kept in sessionStorage only (cleared when the tab closes).
+// In demo mode, calls are answered locally with made-up data (src/utils/demoMode.ts).
+
+import { demoResponse, isDemoMode } from './demoMode';
 
 const TOKEN_KEY = 'itsa_access_token';
 export const AUTH_REQUIRED_EVENT = 'itsa-auth-required';
@@ -48,6 +51,15 @@ export class AuthRequiredError extends Error {
  * (after asking the app to show the token prompt) and Error on network failure.
  */
 export async function apiPost<T>(path: string, body: unknown): Promise<ApiResponse<T>> {
+  if (isDemoMode()) {
+    // Short pause so the demo feels like a real check.
+    await new Promise((r) => setTimeout(r, 450));
+    const fake = demoResponse(path, body);
+    return fake === null
+      ? { ok: false, status: 503, data: { error: 'Not available in the demo. Exit the demo to use this tool.' } as ApiResponse<T>['data'] }
+      : { ok: true, status: 200, data: fake as ApiResponse<T>['data'] };
+  }
+
   const token = getToken();
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers.Authorization = `Bearer ${token}`;

@@ -126,24 +126,24 @@ export default function QrScannerPage() {
   const isUrl = result ? /^https?:\/\//i.test(result) : false;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-canvas text-ink">
       <PageHeader
-        icon={<QrCode className="w-5 h-5 text-sky-400" />}
+        icon={<QrCode className="w-5 h-5 text-brand" />}
         title="QR Code Scanner"
         description="Decode QR codes from images or your camera — detect phishing links instantly"
       />
 
       <div className="max-w-2xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
         {/* Mode tabs */}
-        <div className="flex gap-2 bg-slate-900 border border-slate-800 rounded-xl p-1">
+        <div className="flex gap-2 bg-surface border border-line rounded-xl p-1">
           {(['upload', 'camera'] as Mode[]).map((m) => (
             <button
               key={m}
               onClick={() => { setMode(m); setResult(null); setError(''); stopCamera(); }}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
                 mode === m
-                  ? 'bg-sky-500 text-white shadow'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-brand text-white shadow'
+                  : 'text-muted hover:text-ink'
               }`}
             >
               {m === 'upload' ? <Upload className="w-4 h-4" /> : <Camera className="w-4 h-4" />}
@@ -161,16 +161,16 @@ export default function QrScannerPage() {
             onClick={() => fileInputRef.current?.click()}
             className={`cursor-pointer border-2 border-dashed rounded-xl p-10 flex flex-col items-center gap-4 transition-all ${
               dragOver
-                ? 'border-sky-500 bg-sky-500/5'
-                : 'border-slate-700 hover:border-slate-600 hover:bg-slate-900/50'
+                ? 'border-brand bg-brand-soft'
+                : 'border-line-strong hover:border-line-strong hover:bg-sunken'
             }`}
           >
-            <div className="w-14 h-14 rounded-2xl bg-slate-800 flex items-center justify-center">
-              <QrCode className="w-7 h-7 text-sky-400" />
+            <div className="w-14 h-14 rounded-2xl bg-sunken flex items-center justify-center">
+              <QrCode className="w-7 h-7 text-brand" />
             </div>
             <div className="text-center">
-              <p className="text-slate-300 font-medium text-sm">Drop an image here or tap to browse</p>
-              <p className="text-slate-600 text-xs mt-1">PNG, JPG, WebP — screenshot or photo of a QR code</p>
+              <p className="text-ink-2 font-medium text-sm">Drop an image here or tap to browse</p>
+              <p className="text-faint text-xs mt-1">PNG, JPG, WebP — screenshot or photo of a QR code</p>
             </div>
             <input
               ref={fileInputRef}
@@ -185,7 +185,7 @@ export default function QrScannerPage() {
         {/* Camera mode */}
         {mode === 'camera' && (
           <div className="space-y-4">
-            <div className="relative rounded-xl overflow-hidden bg-slate-900 border border-slate-800 aspect-video flex items-center justify-center">
+            <div className="relative rounded-xl overflow-hidden bg-surface border border-line aspect-video flex items-center justify-center">
               <video
                 ref={videoRef}
                 className={`w-full h-full object-cover ${cameraActive ? 'block' : 'hidden'}`}
@@ -194,20 +194,20 @@ export default function QrScannerPage() {
               />
               {!cameraActive && (
                 <div className="flex flex-col items-center gap-3 py-8">
-                  <Camera className="w-10 h-10 text-slate-600" />
-                  <p className="text-slate-500 text-sm">Camera not started</p>
+                  <Camera className="w-10 h-10 text-faint" />
+                  <p className="text-muted text-sm">Camera not started</p>
                 </div>
               )}
               {cameraActive && (
                 <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                  <div className="w-48 h-48 border-2 border-sky-400/60 rounded-xl shadow-lg shadow-sky-400/10" />
+                  <div className="w-48 h-48 border-2 border-brand rounded-xl shadow-lg " />
                 </div>
               )}
             </div>
             {!cameraActive ? (
               <button
                 onClick={startCamera}
-                className="w-full flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-400 text-white font-semibold py-3.5 rounded-xl transition-all text-sm"
+                className="w-full flex items-center justify-center gap-2 bg-brand hover:bg-brand-strong text-white font-semibold py-3.5 rounded-xl transition-all text-sm"
               >
                 <Camera className="w-4 h-4" />
                 Start Camera
@@ -215,7 +215,7 @@ export default function QrScannerPage() {
             ) : (
               <button
                 onClick={stopCamera}
-                className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-medium py-3.5 rounded-xl transition-all text-sm"
+                className="w-full flex items-center justify-center gap-2 bg-sunken hover:bg-line border border-line-strong text-ink-2 font-medium py-3.5 rounded-xl transition-all text-sm"
               >
                 <X className="w-4 h-4" />
                 Stop Camera
@@ -225,7 +225,7 @@ export default function QrScannerPage() {
         )}
 
         {error && (
-          <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+          <p className="text-red-700 text-sm bg-red-50 border border-red-200 rounded-xl px-4 py-3">
             {error}
           </p>
         )}
@@ -234,26 +234,26 @@ export default function QrScannerPage() {
         {result && (
           <div className="animate-fade-in space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-slate-300">QR Code Content</p>
-              <button onClick={handleReset} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
+              <p className="text-sm font-semibold text-ink-2">QR Code Content</p>
+              <button onClick={handleReset} className="text-xs text-muted hover:text-ink-2 transition-colors">
                 Scan another
               </button>
             </div>
 
             <div className={`rounded-xl border p-4 space-y-3 ${
-              isUrl ? 'bg-amber-500/5 border-amber-500/20' : 'bg-slate-900 border-slate-800'
+              isUrl ? 'bg-amber-50 border-amber-200' : 'bg-surface border-line'
             }`}>
-              <p className="text-sm font-mono break-all text-slate-200">{result}</p>
+              <p className="text-sm font-mono break-all text-ink">{result}</p>
 
               {isUrl && (
                 <div className="flex flex-col sm:flex-row gap-2 pt-1">
-                  <div className="flex items-center gap-2 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-lg">
+                  <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg">
                     <ExternalLink className="w-3 h-3 shrink-0" />
                     URL detected — scan before opening
                   </div>
                   {!auditMode && <button
                     onClick={() => window.dispatchEvent(new CustomEvent('qr-scan-url', { detail: result }))}
-                    className="flex items-center justify-center gap-1.5 text-xs text-sky-400 hover:text-sky-300 border border-sky-500/30 hover:border-sky-500/50 px-3 py-1.5 rounded-lg transition-all"
+                    className="flex items-center justify-center gap-1.5 text-xs text-brand hover:text-brand-strong border border-brand/30 hover:border-brand/60 px-3 py-1.5 rounded-lg transition-all"
                   >
                     Scan URL with VirusTotal →
                   </button>}

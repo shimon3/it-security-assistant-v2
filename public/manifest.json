@@ -4,8 +4,8 @@
   "description": "All-in-one IT security toolkit — analyze emails, scan URLs, check breaches and more.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a",
+  "background_color": "#F2F5F4",
+  "theme_color": "#0A6B70",
   "orientation": "portrait-primary",
   "icons": [
     {

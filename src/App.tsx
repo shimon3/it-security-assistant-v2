@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Menu, Shield } from 'lucide-react';
+import { Menu, Shield, PlayCircle } from 'lucide-react';
 import HomePage from './pages/HomePage';
 import AnalysisPage from './pages/AnalysisPage';
 import UrlScannerPage from './pages/UrlScannerPage';
@@ -18,14 +18,31 @@ import { AUTH_REQUIRED_EVENT } from './utils/apiClient';
 import { isAuditMode, isPersonalOnly, useAuditMode } from './utils/auditMode';
 import PrivacyPage from './pages/PrivacyPage';
 import DomainAuditPage from './pages/DomainAuditPage';
+import HttpHeadersPage from './pages/HttpHeadersPage';
+import ReportPage from './pages/ReportPage';
+import { DEMO_DOMAIN, setDemoMode, useDemoMode } from './utils/demoMode';
+import { clearSession, updateSession } from './utils/auditSession';
 
 export default function App() {
   const [inApp, setInApp] = useState(false);
-  const [activeTool, setActiveTool] = useState<Tool>('email');
+  const [activeTool, setActiveTool] = useState<Tool>('domainaudit');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [qrUrl, setQrUrl] = useState('');
   const [askToken, setAskToken] = useState(false);
   const [auditMode] = useAuditMode();
+  const demo = useDemoMode();
+
+  function startDemo() {
+    setDemoMode(true);
+    updateSession({ domain: DEMO_DOMAIN, clientName: 'Example Shop Ltd', domainAudit: null, httpHeaders: null });
+    setActiveTool('domainaudit');
+    setInApp(true);
+  }
+
+  function exitDemo() {
+    setDemoMode(false);
+    clearSession();
+  }
 
   // Leave a personal-only tool as soon as audit mode is switched on.
   useEffect(() => {
@@ -51,16 +68,16 @@ export default function App() {
   }, []);
 
   if (!inApp) {
-    return <HomePage onStart={() => setInApp(true)} />;
+    return <HomePage onStart={() => setInApp(true)} onDemo={startDemo} />;
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-950">
+    <div className="flex min-h-screen bg-canvas">
       {askToken && <TokenPrompt onClose={() => setAskToken(false)} />}
       {/* Mobile backdrop */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/60 z-40 md:hidden"
+          className="fixed inset-0 bg-ink/30 z-40 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -75,17 +92,27 @@ export default function App() {
 
       <div className="flex-1 min-w-0 flex flex-col">
         {/* Mobile sticky header */}
-        <div className="md:hidden sticky top-0 z-30 flex items-center gap-3 px-4 py-3 bg-slate-900 border-b border-slate-800">
+        <div className="no-print md:hidden sticky top-0 z-30 flex items-center gap-3 px-4 py-3 bg-surface border-b border-line">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="text-slate-400 hover:text-white transition-colors"
+            className="text-muted hover:text-ink transition-colors"
             aria-label="Open menu"
           >
             <Menu className="w-5 h-5" />
           </button>
-          <Shield className="w-4 h-4 text-sky-400 shrink-0" strokeWidth={1.5} />
-          <span className="text-sm font-semibold text-slate-200">IT Security Assistant</span>
+          <Shield className="w-4 h-4 text-brand shrink-0" strokeWidth={1.5} />
+          <span className="text-sm font-semibold text-ink">IT Security Assistant</span>
         </div>
+
+        {demo && (
+          <div className="no-print flex flex-wrap items-center gap-x-3 gap-y-1 px-4 sm:px-8 py-2.5 bg-brand text-white text-sm" role="status">
+            <PlayCircle className="w-4 h-4 shrink-0" />
+            <span className="flex-1 min-w-0">Demo: every result is made up for a fictional shop. Nothing is sent to the server.</span>
+            <button onClick={exitDemo} className="font-semibold underline underline-offset-2 hover:no-underline">
+              Exit demo
+            </button>
+          </div>
+        )}
 
         {activeTool === 'email'   && <AnalysisPage onBack={() => setInApp(false)} />}
         {activeTool === 'url'     && <UrlScannerPage initialUrl={qrUrl} onUrlConsumed={() => setQrUrl('')} />}
@@ -100,6 +127,8 @@ export default function App() {
         {activeTool === 'qr'      && <QrScannerPage />}
         {activeTool === 'privacy' && <PrivacyPage />}
         {activeTool === 'domainaudit' && <DomainAuditPage />}
+        {activeTool === 'httpheaders' && <HttpHeadersPage />}
+        {activeTool === 'report' && <ReportPage />}
       </div>
     </div>
   );

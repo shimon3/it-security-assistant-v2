@@ -1,93 +1,104 @@
-import { Shield, ArrowRight, Mail, Globe, Hash, Lock, Search, ShieldAlert, Code2, ShieldCheck, MailSearch, QrCode } from 'lucide-react';
+import { Shield, ArrowRight, Check, X as XIcon, PlayCircle } from 'lucide-react';
+import { TOOL_GROUPS } from '../components/toolGroups';
 
 interface HomePageProps {
   onStart: () => void;
+  onDemo: () => void;
 }
 
-const tools = [
-  { icon: Mail,        label: 'Email Analysis',        desc: 'Phishing detection',          isNew: false },
-  { icon: Globe,       label: 'URL Scanner',            desc: 'URL reputation via VirusTotal', isNew: false },
-  { icon: Hash,        label: 'Hash Checker',           desc: 'File malware lookup',         isNew: false },
-  { icon: Lock,        label: 'Password Strength',      desc: 'Security evaluator',          isNew: false },
-  { icon: Globe,       label: 'IP Lookup',              desc: 'IP reputation',               isNew: false },
-  { icon: Search,      label: 'Domain WHOIS',           desc: 'Domain info & reputation',    isNew: false },
-  { icon: ShieldAlert, label: 'Have I Been Pwned',      desc: 'Breach check',                isNew: false },
-  { icon: Code2,       label: 'Encoder / Decoder',      desc: 'Base64, URL, Hex',           isNew: false },
-  { icon: ShieldCheck, label: 'SSL/TLS Checker',        desc: 'Certificate grade & expiry',  isNew: true  },
-  { icon: MailSearch,  label: 'Header Analyzer',        desc: 'SPF / DKIM / spoofing',       isNew: true  },
-  { icon: QrCode,      label: 'QR Code Scanner',        desc: 'Decode & scan for threats',   isNew: true  },
+// What a typical small-business domain looks like on the first audit: shown as the hero
+// so the visitor sees the output before reading about it. Illustrative values.
+const SAMPLE = [
+  { ok: true, text: 'SPF lists the mail servers' },
+  { ok: false, text: 'DMARC only monitors (p=none)' },
+  { ok: false, text: 'No DKIM signature found' },
+  { ok: false, text: 'Website sends no HSTS header' },
 ];
 
-export default function HomePage({ onStart }: HomePageProps) {
+export default function HomePage({ onStart, onDemo }: HomePageProps) {
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col">
-      <nav className="px-4 sm:px-6 py-4 sm:py-5 flex items-center gap-3 border-b border-slate-800">
-        <Shield className="w-6 h-6 text-sky-400 shrink-0" strokeWidth={1.5} />
-        <span className="font-semibold text-slate-200 tracking-tight">IT Security Assistant</span>
-      </nav>
+    <div className="min-h-screen bg-canvas text-ink flex flex-col">
+      <header className="h-16 px-5 sm:px-8 flex items-center gap-2.5 border-b border-line bg-surface">
+        <Shield className="w-5 h-5 text-brand shrink-0" strokeWidth={2} />
+        <span className="font-semibold tracking-tight">IT Security Assistant</span>
+      </header>
 
-      <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-10 sm:py-16">
-        <div className="max-w-3xl w-full space-y-10">
-
-          {/* Hero */}
-          <div className="text-center space-y-6">
-            <div className="inline-flex items-center gap-2 bg-sky-500/10 border border-sky-500/20 text-sky-400 text-sm font-medium px-4 py-2 rounded-full">
-              <Shield className="w-4 h-4" />
-              All-in-one Security Toolkit
+      <main className="flex-1 w-full max-w-5xl mx-auto px-5 sm:px-8 py-12 sm:py-20">
+        <section className="grid gap-12 md:grid-cols-[1.1fr_1fr] md:items-center">
+          <div className="space-y-6">
+            <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight leading-[1.08]">
+              Find where a small business is exposed, in one sitting.
+            </h1>
+            <p className="text-lg text-ink-2 leading-relaxed max-w-[34rem]">
+              Check whether anyone can send email in the company’s name, whether staff passwords have leaked,
+              and whether that suspicious email is phishing. Every finding comes with a fix in plain words.
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={onStart}
+                className="inline-flex items-center gap-2 bg-brand hover:bg-brand-strong text-white font-semibold px-6 py-3.5 rounded-lg text-base transition-colors"
+              >
+                Open the tools
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <button
+                onClick={onDemo}
+                className="inline-flex items-center gap-2 border border-line-strong bg-surface hover:border-brand hover:text-brand-strong text-ink font-semibold px-6 py-3.5 rounded-lg text-base transition-colors"
+              >
+                <PlayCircle className="w-4 h-4" />
+                Try the demo
+              </button>
             </div>
-
-            <div className="space-y-3">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-white leading-tight">
-                IT Security
-                <span className="block text-sky-400">Assistant</span>
-              </h1>
-              <p className="text-base sm:text-xl text-slate-400 max-w-xl mx-auto leading-relaxed">
-                11 security tools in one dashboard. Analyze emails, scan URLs, check breaches, decode payloads and more.
-              </p>
-            </div>
-
-            <button
-              onClick={onStart}
-              className="inline-flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-white font-semibold px-8 py-4 rounded-xl text-lg transition-all duration-200 shadow-lg shadow-sky-500/25 hover:shadow-sky-400/30 hover:scale-[1.02] active:scale-[0.98]"
-            >
-              Launch Dashboard
-              <ArrowRight className="w-5 h-5" />
-            </button>
+            <p className="text-sm text-muted">The demo uses a made-up shop, so you can show it to anyone without an access token.</p>
           </div>
 
-          {/* Tools grid */}
-          <div className="space-y-4">
-            <p className="text-xs text-slate-600 font-semibold uppercase tracking-wider text-center">Available Tools</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {tools.map(({ icon: Icon, label, desc, isNew }) => (
-                <button
-                  key={label}
-                  onClick={onStart}
-                  className="bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 rounded-xl p-4 text-left flex items-start gap-3 transition-all group"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-slate-800 group-hover:bg-slate-700 flex items-center justify-center shrink-0 transition-colors">
-                    <Icon className="w-4 h-4 text-sky-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold text-slate-200 text-sm truncate">{label}</p>
-                      {isNew && (
-                        <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded shrink-0">
-                          NEW
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-slate-500 text-xs mt-0.5 leading-relaxed">{desc}</p>
-                  </div>
-                </button>
+          <figure className="rounded-xl border border-line bg-surface p-6 sm:p-7" aria-label="Example audit result">
+            <div className="flex items-center gap-5 pb-5 border-b border-line">
+              <div className="w-20 h-20 shrink-0 rounded-2xl border-[3px] border-orange-500 bg-orange-50 flex items-center justify-center">
+                <span className="text-5xl font-bold text-orange-700 leading-none">D</span>
+              </div>
+              <div>
+                <p className="text-sm text-muted">example-shop.co.il</p>
+                <p className="text-2xl font-semibold">47 / 100</p>
+              </div>
+            </div>
+            <ul className="pt-4 space-y-2.5">
+              {SAMPLE.map((s) => (
+                <li key={s.text} className="flex items-start gap-2.5 text-sm">
+                  {s.ok ? (
+                    <Check className="w-4 h-4 mt-0.5 shrink-0 text-emerald-700" aria-label="OK" />
+                  ) : (
+                    <XIcon className="w-4 h-4 mt-0.5 shrink-0 text-red-700" aria-label="Problem" />
+                  )}
+                  <span className={s.ok ? 'text-muted' : 'text-ink'}>{s.text}</span>
+                </li>
               ))}
+            </ul>
+            <figcaption className="pt-5 text-xs text-faint">Example of a domain email security result.</figcaption>
+          </figure>
+        </section>
+
+        <section className="mt-20 grid gap-10 sm:grid-cols-3">
+          {TOOL_GROUPS.map((g) => (
+            <div key={g.name}>
+              <h2 className="text-sm font-semibold text-ink pb-3 mb-3 border-b border-line">{g.name}</h2>
+              <ul className="space-y-2">
+                {g.tools.map(({ id, label, icon: Icon }) => (
+                  <li key={id}>
+                    <button onClick={onStart} className="flex items-center gap-2.5 text-sm text-ink-2 hover:text-brand transition-colors">
+                      <Icon className="w-4 h-4 text-muted shrink-0" />
+                      {label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
-        </div>
+          ))}
+        </section>
       </main>
 
-      <footer className="px-4 sm:px-6 py-5 border-t border-slate-800 text-center text-slate-600 text-sm">
-        IT Security Assistant &mdash; For educational and internal security awareness use only
+      <footer className="px-5 sm:px-8 py-5 border-t border-line text-sm text-muted text-center">
+        For security assessments with the owner’s permission and for internal awareness.
       </footer>
     </div>
   );

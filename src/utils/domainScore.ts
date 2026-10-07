@@ -1,6 +1,8 @@
 // Turns the raw DNS data from /api/domain-audit into findings and an A–E grade.
 // Each finding carries a plain-language impact for a non-technical client, and a technical detail.
 
+import { toScore, type Finding, type Score } from './findings';
+
 export interface DomainAuditData {
   domain: string;
   exists: boolean;
@@ -14,29 +16,9 @@ export interface DomainAuditData {
   checkedAt: string;
 }
 
-export type Severity = 'critical' | 'high' | 'medium' | 'low' | 'ok';
-
-export interface Finding {
-  id: string;
-  control: 'SPF' | 'DMARC' | 'DKIM' | 'MX' | 'DNSSEC' | 'MTA-STS' | 'TLS-RPT';
-  severity: Severity;
-  title: string;
-  /** What it means for the business, in plain words. */
-  impact: string;
-  recommendation: string;
-  /** Raw record or technical detail, for the appendix. */
-  detail?: string;
-  /** Points removed from 100. */
-  penalty: number;
-}
-
-export interface DomainScore {
-  score: number;
-  grade: 'A' | 'B' | 'C' | 'D' | 'E';
-  findings: Finding[];
-}
-
-export const SEVERITY_ORDER: Severity[] = ['critical', 'high', 'medium', 'low', 'ok'];
+export type { Severity, Finding } from './findings';
+export { SEVERITY_ORDER, gradeFor } from './findings';
+export type DomainScore = Score;
 
 /** Parses "v=DMARC1; p=reject; rua=mailto:x" into lower-case tag names. */
 export function parseTags(record: string): Record<string, string> {
@@ -55,14 +37,6 @@ export function spfAllQualifier(record: string): string | null {
   return /^[+\-~?]/.test(term) ? term[0] : '+';
 }
 
-export function gradeFor(score: number): DomainScore['grade'] {
-  if (score >= 90) return 'A';
-  if (score >= 75) return 'B';
-  if (score >= 60) return 'C';
-  if (score >= 40) return 'D';
-  return 'E';
-}
-
 function spfFindings(d: DomainAuditData): Finding[] {
   const { records, lookups } = d.spf;
   if (records.length === 0) {
@@ -75,7 +49,7 @@ function spfFindings(d: DomainAuditData): Finding[] {
   }
   if (records.length > 1) {
     return [{
-      id: 'spf-multiple', control: 'SPF', severity: 'high', penalty: 20,
+      id: 'spf-multiple', control: 'SPF', severity: 'high', penalty: 20, params: { count: records.length },
       title: `${records.length} SPF records instead of one`,
       impact: 'With more than one SPF record, receiving servers treat SPF as broken, as if there were none.',
       recommendation: 'Merge them into a single "v=spf1" record.',
@@ -97,7 +71,7 @@ function spfFindings(d: DomainAuditData): Finding[] {
     });
   } else if (all === '?' || all === null) {
     out.push({
-      id: 'spf-neutral', control: 'SPF', severity: 'medium', penalty: 15,
+      id: 'spf-neutral', control: 'SPF', severity: 'medium', penalty: 15, params: { variant: all === null ? 'none' : 'neutral' },
       title: all === null ? 'SPF record has no "all" rule' : 'SPF ends with "?all" (neutral)',
       impact: 'Servers not listed in SPF are not marked as suspicious, so SPF gives almost no protection.',
       recommendation: 'End the record with "-all" or "~all".',
@@ -115,7 +89,7 @@ function spfFindings(d: DomainAuditData): Finding[] {
 
   if (lookups !== null && lookups > 10) {
     out.push({
-      id: 'spf-too-many-lookups', control: 'SPF', severity: 'high', penalty: 15,
+      id: 'spf-too-many-lookups', control: 'SPF', severity: 'high', penalty: 15, params: { count: lookups },
       title: `SPF needs ${lookups} DNS lookups (limit is 10)`,
       impact: 'Above 10 lookups, receiving servers treat SPF as failed, so even your genuine emails can be rejected or sent to spam.',
       recommendation: 'Remove unused "include:" entries or replace some of them with the providers\' IP ranges.',
@@ -144,7 +118,7 @@ function dmarcFindings(d: DomainAuditData): Finding[] {
   }
   if (records.length > 1) {
     return [{
-      id: 'dmarc-multiple', control: 'DMARC', severity: 'high', penalty: 25,
+      id: 'dmarc-multiple', control: 'DMARC', severity: 'high', penalty: 25, params: { count: records.length },
       title: `${records.length} DMARC records instead of one`,
       impact: 'With more than one record, receiving servers ignore DMARC entirely.',
       recommendation: 'Keep a single "_dmarc" TXT record.',
@@ -172,7 +146,7 @@ function dmarcFindings(d: DomainAuditData): Finding[] {
     });
   } else {
     out.push({
-      id: 'dmarc-none', control: 'DMARC', severity: 'high', penalty: 15,
+      id: 'dmarc-none', control: 'DMARC', severity: 'high', penalty: 15, params: { variant: policy === 'none' ? 'none' : 'invalid' },
       title: policy === 'none' ? 'DMARC only monitors (p=none)' : 'DMARC policy is missing or invalid',
       impact: 'Forged emails in your name are still delivered normally; the record only produces reports.',
       recommendation: 'Review the reports, then move to "p=quarantine" and then "p=reject".',
@@ -183,7 +157,7 @@ function dmarcFindings(d: DomainAuditData): Finding[] {
   const pct = tags.pct !== undefined ? Number(tags.pct) : 100;
   if (policy !== 'none' && pct < 100) {
     out.push({
-      id: 'dmarc-pct', control: 'DMARC', severity: 'low', penalty: 5,
+      id: 'dmarc-pct', control: 'DMARC', severity: 'low', penalty: 5, params: { pct },
       title: `DMARC applies to only ${pct}% of emails`,
       impact: 'The remaining emails that fail authentication are delivered normally.',
       recommendation: 'Raise "pct" to 100 (or remove it).',
@@ -205,7 +179,7 @@ function dmarcFindings(d: DomainAuditData): Finding[] {
 function dkimFindings(d: DomainAuditData): Finding[] {
   if (d.dkim.found.length > 0) {
     return [{
-      id: 'dkim-found', control: 'DKIM', severity: 'ok', penalty: 0,
+      id: 'dkim-found', control: 'DKIM', severity: 'ok', penalty: 0, params: { selectors: d.dkim.found.map((f) => f.selector).join(', ') },
       title: `DKIM key found (selector "${d.dkim.found.map((f) => f.selector).join('", "')}")`,
       impact: 'Emails can be signed so receivers can verify they were not altered.', recommendation: '—',
     }];
@@ -263,7 +237,5 @@ export function scoreDomain(d: DomainAuditData): DomainScore {
     }
   }
 
-  const score = Math.max(0, 100 - findings.reduce((sum, f) => sum + f.penalty, 0));
-  findings.sort((a, b) => SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity));
-  return { score, grade: gradeFor(score), findings };
+  return toScore(findings);
 }

@@ -29,10 +29,10 @@ function timeAgo(timestamp: number): string {
 }
 
 function getLevelColor(level: string) {
-  if (level === 'High') return 'text-red-400 bg-red-500/10 border-red-500/20';
+  if (level === 'High') return 'text-red-700 bg-red-50 border-red-200';
   if (level === 'Medium')
-    return 'text-amber-400 bg-amber-500/10 border-amber-500/20';
-  return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+    return 'text-amber-700 bg-amber-50 border-amber-200';
+  return 'text-emerald-700 bg-emerald-50 border-emerald-200';
 }
 
 function getLevelDot(level: string) {
@@ -48,29 +48,29 @@ export default function HistoryPanel({
   onClose,
 }: HistoryPanelProps) {
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+    <div className="bg-surface border border-line rounded-2xl overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-line">
         <div className="flex items-center gap-2">
-          <Clock className="w-4 h-4 text-sky-400" />
-          <span className="text-sm font-semibold text-white">
+          <Clock className="w-4 h-4 text-brand" />
+          <span className="text-sm font-semibold text-ink">
             Recent Analyses
           </span>
-          <span className="text-xs text-slate-500 bg-slate-800 px-2 py-0.5 rounded-full">
+          <span className="text-xs text-muted bg-sunken px-2 py-0.5 rounded-full">
             {history.length}/5
           </span>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={onClear}
-            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-red-400 transition-colors px-2 py-1 rounded"
+            className="flex items-center gap-1.5 text-xs text-muted hover:text-red-700 transition-colors px-2 py-1 rounded"
           >
             <Trash2 className="w-3 h-3" />
             Clear all
           </button>
           <button
             onClick={onClose}
-            className="text-slate-500 hover:text-white transition-colors p-1 rounded"
+            className="text-muted hover:text-ink transition-colors p-1 rounded"
           >
             <X className="w-4 h-4" />
           </button>
@@ -78,12 +78,12 @@ export default function HistoryPanel({
       </div>
 
       {/* List */}
-      <div className="divide-y divide-slate-800/50">
+      <div className="divide-y divide-line">
         {history.map((entry) => (
           <button
             key={entry.id}
             onClick={() => onLoad(entry)}
-            className="w-full flex items-center gap-4 px-5 py-4 hover:bg-slate-800/50 transition-colors text-left group"
+            className="w-full flex items-center gap-4 px-5 py-4 hover:bg-sunken transition-colors text-left group"
           >
             {/* Risk dot */}
             <div
@@ -94,10 +94,10 @@ export default function HistoryPanel({
 
             {/* Info */}
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-slate-200 truncate font-medium">
+              <p className="text-sm text-ink truncate font-medium">
                 {entry.senderEmail || 'No sender'}
               </p>
-              <p className="text-xs text-slate-500 truncate mt-0.5">
+              <p className="text-xs text-muted truncate mt-0.5">
                 {entry.emailPreview}
               </p>
             </div>
@@ -113,10 +113,10 @@ export default function HistoryPanel({
 
             {/* Time + reload icon */}
             <div className="flex-shrink-0 text-right">
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted">
                 {timeAgo(entry.analyzedAt)}
               </p>
-              <RotateCcw className="w-3 h-3 text-slate-600 group-hover:text-sky-400 transition-colors mt-1 ml-auto" />
+              <RotateCcw className="w-3 h-3 text-faint group-hover:text-brand transition-colors mt-1 ml-auto" />
             </div>
           </button>
         ))}
