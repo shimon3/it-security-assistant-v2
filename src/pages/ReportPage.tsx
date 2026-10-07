@@ -7,6 +7,7 @@ import { updateSession, useAuditSession } from '../utils/auditSession';
 import type { DomainAuditData } from '../utils/domainScore';
 import { isHttpHeadersInconclusive, type HttpHeadersData } from '../utils/httpHeadersScore';
 import { hasAssessedInternalControls, isInternalAuditComplete } from '../utils/internalAudit';
+import { emailPlatformLabelHe, hasClientEnvironment, presenceLabelHe } from '../utils/clientEnvironment';
 import { buildReport, formatDateHe, type Report, type ReportFinding } from '../utils/report';
 import { EFFORT_HE, OWNER_HE, SEVERITY_HE } from '../utils/reportHe';
 import { SEVERITY_STYLE } from '../utils/findingsStyle';
@@ -72,12 +73,13 @@ export default function ReportPage() {
   const domainAudit = sameDomain(session.domainAudit) ? session.domainAudit : null;
   const httpHeaders = sameDomain(session.httpHeaders) ? session.httpHeaders : null;
   const internalAudit = session.internalAudit;
+  const clientEnvironment = session.clientEnvironment;
   const missing = !domainAudit || !httpHeaders;
   const webInconclusive = httpHeaders ? isHttpHeadersInconclusive(httpHeaders) : false;
 
   const report = useMemo(
-    () => buildReport({ clientName, auditor: profile.name, domain, date: new Date(), domainAudit, httpHeaders, internalAudit }),
-    [clientName, profile.name, domain, domainAudit, httpHeaders, internalAudit],
+    () => buildReport({ clientName, auditor: profile.name, domain, date: new Date(), domainAudit, httpHeaders, internalAudit, clientEnvironment }),
+    [clientName, profile.name, domain, domainAudit, httpHeaders, internalAudit, clientEnvironment],
   );
 
   function updateProfile(patch: Partial<ConsultantProfile>) {
@@ -342,6 +344,36 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
         )}
       </section>
 
+      {hasClientEnvironment(input.clientEnvironment ?? null) && (
+        <section className="py-6 border-b border-line break-inside-avoid">
+          <h2 className="text-lg font-bold mb-3">סביבת הלקוח</h2>
+          <div className="grid gap-x-8 gap-y-2 sm:grid-cols-2 text-sm">
+            {input.clientEnvironment?.users && (
+              <p><span className="text-muted">משתמשים:</span> <bdi>{input.clientEnvironment.users}</bdi></p>
+            )}
+            {input.clientEnvironment?.endpoints && (
+              <p><span className="text-muted">מחשבים / תחנות:</span> <bdi>{input.clientEnvironment.endpoints}</bdi></p>
+            )}
+            {input.clientEnvironment?.emailPlatform && (
+              <p><span className="text-muted">מערכת דואר:</span> <bdi>{emailPlatformLabelHe(input.clientEnvironment.emailPlatform)}</bdi></p>
+            )}
+            {input.clientEnvironment?.servers && (
+              <p><span className="text-muted">שרתים:</span> <bdi>{presenceLabelHe(input.clientEnvironment.servers)}</bdi></p>
+            )}
+            {input.clientEnvironment?.endpointProtection && (
+              <p><span className="text-muted">Endpoint / EDR:</span> <bdi>{input.clientEnvironment.endpointProtection}</bdi></p>
+            )}
+            {input.clientEnvironment?.backupSolution && (
+              <p><span className="text-muted">גיבוי:</span> <bdi>{input.clientEnvironment.backupSolution}</bdi></p>
+            )}
+            {input.clientEnvironment?.remoteAccess && (
+              <p className="sm:col-span-2"><span className="text-muted">גישה מרחוק:</span> <bdi>{input.clientEnvironment.remoteAccess}</bdi></p>
+            )}
+          </div>
+          <p className="mt-3 text-xs text-muted">מידע זה מתאר את סביבת הלקוח בלבד ואינו משפיע על הציון.</p>
+        </section>
+      )}
+
       {/* Audit scope */}
       <section className="py-6 border-b border-line break-inside-avoid">
         <h2 className="text-lg font-bold mb-3">היקף הבדיקה</h2>
@@ -438,6 +470,18 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
               <p className="break-all">DMARC: {input.domainAudit.dmarc.records.join(' | ') || '—'}</p>
               <p>DKIM: {input.domainAudit.dkim.found.map((k) => k.selector).join(', ') || `none found (checked ${input.domainAudit.dkim.checked.join(', ')})`}</p>
               <p>DNSSEC: {input.domainAudit.dnssec ? 'yes' : 'no'} · MTA-STS: {input.domainAudit.mtaSts ? 'yes' : 'no'} · TLS-RPT: {input.domainAudit.tlsRpt ? 'yes' : 'no'}</p>
+            </div>
+          )}
+          {hasClientEnvironment(input.clientEnvironment ?? null) && (
+            <div className="break-inside-avoid">
+              <p className="font-sans font-semibold text-ink text-xs mb-1">Client environment</p>
+              {input.clientEnvironment?.users && <p>Users: {input.clientEnvironment.users}</p>}
+              {input.clientEnvironment?.endpoints && <p>Endpoints: {input.clientEnvironment.endpoints}</p>}
+              {input.clientEnvironment?.emailPlatform && <p>Email platform: {input.clientEnvironment.emailPlatform}</p>}
+              {input.clientEnvironment?.servers && <p>Servers: {input.clientEnvironment.servers}</p>}
+              {input.clientEnvironment?.endpointProtection && <p>Endpoint protection: {input.clientEnvironment.endpointProtection}</p>}
+              {input.clientEnvironment?.backupSolution && <p>Backup: {input.clientEnvironment.backupSolution}</p>}
+              {input.clientEnvironment?.remoteAccess && <p>Remote access: {input.clientEnvironment.remoteAccess}</p>}
             </div>
           )}
           {input.internalAudit && (
