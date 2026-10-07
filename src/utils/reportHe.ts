@@ -152,9 +152,9 @@ const T: Record<string, (p: Params) => HeText> = {
 
   // ── Website ──
   'https-unreachable': () => ({
-    title: 'האתר לא עונה ב-HTTPS',
-    impact: 'הגולשים מקבלים שגיאה או גולשים בחיבור לא מוצפן שכל אחד ברשת יכול לקרוא או לשנות.',
-    fix: 'להתקין תעודת TLS (בחינם דרך Let’s Encrypt או בפאנל האחסון) ולהגיש את האתר ב-HTTPS.',
+    title: 'האתר זמין ב-HTTP אך לא ב-HTTPS',
+    impact: 'קיים שירות אינטרנט ציבורי ללא נקודת HTTPS תקינה, ולכן התעבורה עלולה להישאר לא מוצפנת.',
+    fix: 'להפעיל HTTPS עם תעודת TLS תקינה ולהפנות את תעבורת ה-HTTP ל-HTTPS.',
     effort: 'medium', owner: 'web',
   }),
   'no-https-redirect': () => ({
