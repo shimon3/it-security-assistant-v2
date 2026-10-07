@@ -7,12 +7,14 @@ import { findingsText } from '../utils/findingsStyle';
 import { apiPost, apiErrorOf, errorMessage } from '../utils/apiClient';
 import { scoreHttpHeaders, type HttpHeadersData } from '../utils/httpHeadersScore';
 import { updateSession, useAuditSession } from '../utils/auditSession';
+import { useLanguage } from '../i18n';
 
 export default function HttpHeadersPage() {
   const session = useAuditSession();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showRaw, setShowRaw] = useState(false);
+  const { t } = useLanguage();
 
   const data = session.httpHeaders;
   const score = data ? scoreHttpHeaders(data) : null;
@@ -24,9 +26,9 @@ export default function HttpHeadersPage() {
     try {
       const res = await apiPost<HttpHeadersData>('/api/http-headers', { domain });
       if (res.ok && res.data && 'https' in res.data) updateSession({ httpHeaders: res.data, domain: res.data.domain });
-      else setError(apiErrorOf(res) ?? 'The check did not finish. Try again.');
+      else setError(apiErrorOf(res) ?? t('httpFailed'));
     } catch (err) {
-      setError(errorMessage(err, 'Could not reach the server. Check your connection and try again.'));
+      setError(errorMessage(err, t('serverFailed')));
     } finally {
       setLoading(false);
     }
@@ -38,8 +40,8 @@ export default function HttpHeadersPage() {
     <div className="min-h-screen bg-canvas text-ink">
       <PageHeader
         icon={<Layers className="w-5 h-5" />}
-        title="Website security headers"
-        description="Does the company website protect its visitors? Checks HTTPS, HSTS, Content Security Policy and other browser protections."
+        title={t('httpTitle')}
+        description={t('httpDesc')}
       />
 
       <div className="max-w-2xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
@@ -48,8 +50,8 @@ export default function HttpHeadersPage() {
           initialValue={session.domain}
           loading={loading}
           error={error}
-          hint="Loads the home page once, like a visitor would, and reads the response headers. Available in audit mode."
-          buttonLabel="Check"
+          hint={t('httpHint')}
+          buttonLabel={t('check')}
           onSubmit={handleCheck}
         />
 
@@ -71,7 +73,7 @@ export default function HttpHeadersPage() {
                 className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium text-ink-2"
                 aria-expanded={showRaw}
               >
-                Redirects and raw headers
+                {t('rawHeaders')}
                 <ChevronDown className={`w-4 h-4 transition-transform ${showRaw ? 'rotate-180' : ''}`} />
               </button>
               {showRaw && (
@@ -90,7 +92,7 @@ export default function HttpHeadersPage() {
                     )}
                   </ol>
                   <dl className="space-y-2">
-                    {headers.length === 0 && <p className="text-muted">No security headers received.</p>}
+                    {headers.length === 0 && <p className="text-muted">{t('noHeaders')}</p>}
                     {headers.map(([k, v]) => (
                       <div key={k} className="grid grid-cols-1 sm:grid-cols-[12rem_1fr] gap-x-2">
                         <dt className="text-muted">{k}</dt>
