@@ -22,6 +22,8 @@ import HttpHeadersPage from './pages/HttpHeadersPage';
 import ReportPage from './pages/ReportPage';
 import { DEMO_DOMAIN, setDemoMode, useDemoMode } from './utils/demoMode';
 import { clearSession, updateSession } from './utils/auditSession';
+import { useLanguage } from './i18n';
+import LanguageSwitch from './components/LanguageSwitch';
 
 export default function App() {
   const [inApp, setInApp] = useState(false);
@@ -31,6 +33,7 @@ export default function App() {
   const [askToken, setAskToken] = useState(false);
   const [auditMode] = useAuditMode();
   const demo = useDemoMode();
+  const { t, dir } = useLanguage();
 
   function startDemo() {
     setDemoMode(true);
@@ -72,7 +75,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex min-h-screen bg-canvas">
+    <div dir={dir} className="flex min-h-screen bg-canvas">
       {askToken && <TokenPrompt onClose={() => setAskToken(false)} />}
       {/* Mobile backdrop */}
       {sidebarOpen && (
@@ -96,20 +99,21 @@ export default function App() {
           <button
             onClick={() => setSidebarOpen(true)}
             className="text-muted hover:text-ink transition-colors"
-            aria-label="Open menu"
+            aria-label={t('openMenu')}
           >
             <Menu className="w-5 h-5" />
           </button>
           <Shield className="w-4 h-4 text-brand shrink-0" strokeWidth={1.5} />
-          <span className="text-sm font-semibold text-ink">IT Security Assistant</span>
+          <span className="text-sm font-semibold text-ink flex-1">IT Security Assistant</span>
+          <LanguageSwitch compact />
         </div>
 
         {demo && (
           <div className="no-print flex flex-wrap items-center gap-x-3 gap-y-1 px-4 sm:px-8 py-2.5 bg-brand text-white text-sm" role="status">
             <PlayCircle className="w-4 h-4 shrink-0" />
-            <span className="flex-1 min-w-0">Demo: every result is made up for a fictional shop. Nothing is sent to the server.</span>
+            <span className="flex-1 min-w-0">{t('demoBanner')}</span>
             <button onClick={exitDemo} className="font-semibold underline underline-offset-2 hover:no-underline">
-              Exit demo
+              {t('exitDemo')}
             </button>
           </div>
         )}
