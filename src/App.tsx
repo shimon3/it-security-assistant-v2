@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Menu, Shield } from 'lucide-react';
+import { Menu, Shield, PlayCircle } from 'lucide-react';
 import HomePage from './pages/HomePage';
 import AnalysisPage from './pages/AnalysisPage';
 import UrlScannerPage from './pages/UrlScannerPage';
@@ -19,6 +19,8 @@ import { isAuditMode, isPersonalOnly, useAuditMode } from './utils/auditMode';
 import PrivacyPage from './pages/PrivacyPage';
 import DomainAuditPage from './pages/DomainAuditPage';
 import HttpHeadersPage from './pages/HttpHeadersPage';
+import { DEMO_DOMAIN, setDemoMode, useDemoMode } from './utils/demoMode';
+import { clearSession, updateSession } from './utils/auditSession';
 
 export default function App() {
   const [inApp, setInApp] = useState(false);
@@ -27,6 +29,19 @@ export default function App() {
   const [qrUrl, setQrUrl] = useState('');
   const [askToken, setAskToken] = useState(false);
   const [auditMode] = useAuditMode();
+  const demo = useDemoMode();
+
+  function startDemo() {
+    setDemoMode(true);
+    updateSession({ domain: DEMO_DOMAIN, clientName: 'Example Shop Ltd', domainAudit: null, httpHeaders: null });
+    setActiveTool('domainaudit');
+    setInApp(true);
+  }
+
+  function exitDemo() {
+    setDemoMode(false);
+    clearSession();
+  }
 
   // Leave a personal-only tool as soon as audit mode is switched on.
   useEffect(() => {
@@ -52,7 +67,7 @@ export default function App() {
   }, []);
 
   if (!inApp) {
-    return <HomePage onStart={() => setInApp(true)} />;
+    return <HomePage onStart={() => setInApp(true)} onDemo={startDemo} />;
   }
 
   return (
@@ -87,6 +102,16 @@ export default function App() {
           <Shield className="w-4 h-4 text-brand shrink-0" strokeWidth={1.5} />
           <span className="text-sm font-semibold text-ink">IT Security Assistant</span>
         </div>
+
+        {demo && (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 sm:px-8 py-2.5 bg-brand text-white text-sm" role="status">
+            <PlayCircle className="w-4 h-4 shrink-0" />
+            <span className="flex-1 min-w-0">Demo: every result is made up for a fictional shop. Nothing is sent to the server.</span>
+            <button onClick={exitDemo} className="font-semibold underline underline-offset-2 hover:no-underline">
+              Exit demo
+            </button>
+          </div>
+        )}
 
         {activeTool === 'email'   && <AnalysisPage onBack={() => setInApp(false)} />}
         {activeTool === 'url'     && <UrlScannerPage initialUrl={qrUrl} onUrlConsumed={() => setQrUrl('')} />}

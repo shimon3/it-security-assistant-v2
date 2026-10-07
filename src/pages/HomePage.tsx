@@ -1,8 +1,9 @@
-import { Shield, ArrowRight, Check, X as XIcon } from 'lucide-react';
+import { Shield, ArrowRight, Check, X as XIcon, PlayCircle } from 'lucide-react';
 import { TOOL_GROUPS } from '../components/toolGroups';
 
 interface HomePageProps {
   onStart: () => void;
+  onDemo: () => void;
 }
 
 // What a typical small-business domain looks like on the first audit: shown as the hero
@@ -14,7 +15,7 @@ const SAMPLE = [
   { ok: false, text: 'Website sends no HSTS header' },
 ];
 
-export default function HomePage({ onStart }: HomePageProps) {
+export default function HomePage({ onStart, onDemo }: HomePageProps) {
   return (
     <div className="min-h-screen bg-canvas text-ink flex flex-col">
       <header className="h-16 px-5 sm:px-8 flex items-center gap-2.5 border-b border-line bg-surface">
@@ -32,13 +33,23 @@ export default function HomePage({ onStart }: HomePageProps) {
               Check whether anyone can send email in the company’s name, whether staff passwords have leaked,
               and whether that suspicious email is phishing. Every finding comes with a fix in plain words.
             </p>
-            <button
-              onClick={onStart}
-              className="inline-flex items-center gap-2 bg-brand hover:bg-brand-strong text-white font-semibold px-6 py-3.5 rounded-lg text-base transition-colors"
-            >
-              Open the tools
-              <ArrowRight className="w-4 h-4" />
-            </button>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={onStart}
+                className="inline-flex items-center gap-2 bg-brand hover:bg-brand-strong text-white font-semibold px-6 py-3.5 rounded-lg text-base transition-colors"
+              >
+                Open the tools
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <button
+                onClick={onDemo}
+                className="inline-flex items-center gap-2 border border-line-strong bg-surface hover:border-brand hover:text-brand-strong text-ink font-semibold px-6 py-3.5 rounded-lg text-base transition-colors"
+              >
+                <PlayCircle className="w-4 h-4" />
+                Try the demo
+              </button>
+            </div>
+            <p className="text-sm text-muted">The demo uses a made-up shop, so you can show it to anyone without an access token.</p>
           </div>
 
           <figure className="rounded-xl border border-line bg-surface p-6 sm:p-7" aria-label="Example audit result">
