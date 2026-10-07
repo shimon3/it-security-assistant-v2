@@ -42,9 +42,9 @@ export default function Sidebar({ activeTool, onSelect, isOpen = false, onClose,
         key={id}
         onClick={() => onSelect(id)}
         aria-current={active ? 'page' : undefined}
-        className={`relative w-full flex items-center gap-3 px-3 py-1.5 rounded-md text-sm transition-colors ${dir === 'he' ? 'text-right' : 'text-left'} ${active ? 'bg-brand-soft text-brand-strong font-semibold' : 'text-ink-2 hover:bg-sunken'}`}
+        className={`relative w-full flex items-center gap-3 px-3 py-1.5 rounded-md text-sm transition-colors ${dir === 'rtl' ? 'text-right' : 'text-left'} ${active ? 'bg-brand-soft text-brand-strong font-semibold' : 'text-ink-2 hover:bg-sunken'}`}
       >
-        {active && <span className={`absolute top-1.5 bottom-1.5 w-[3px] rounded-full bg-brand ${dir === 'he' ? 'right-0' : 'left-0'}`} aria-hidden="true" />}
+        {active && <span className={`absolute top-1.5 bottom-1.5 w-[3px] rounded-full bg-brand ${dir === 'rtl' ? 'right-0' : 'left-0'}`} aria-hidden="true" />}
         <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-brand' : 'text-muted'}`} />
         <span className="truncate">{t(TOOL_KEY[id])}</span>
       </button>
@@ -56,11 +56,11 @@ export default function Sidebar({ activeTool, onSelect, isOpen = false, onClose,
       dir={dir}
       className={[
         'fixed md:sticky md:top-0 inset-y-0 z-50',
-        dir === 'he' ? 'right-0' : 'left-0',
+        dir === 'rtl' ? 'right-0' : 'left-0',
         'w-72 md:w-64 shrink-0 h-screen bg-surface flex flex-col',
-        dir === 'he' ? 'border-l border-line' : 'border-r border-line',
+        dir === 'rtl' ? 'border-l border-line' : 'border-r border-line',
         'transition-transform duration-200 ease-in-out',
-        isOpen ? 'translate-x-0' : dir === 'he' ? 'translate-x-full md:translate-x-0' : '-translate-x-full md:translate-x-0',
+        isOpen ? 'translate-x-0' : dir === 'rtl' ? 'translate-x-full md:translate-x-0' : '-translate-x-full md:translate-x-0',
       ].join(' ')}
     >
       <div className="px-5 h-16 shrink-0 border-b border-line flex items-center gap-2.5">
