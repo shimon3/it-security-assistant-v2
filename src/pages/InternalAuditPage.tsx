@@ -47,6 +47,15 @@ export default function InternalAuditPage() {
     updateSession({ internalAudit: next });
   }
 
+  function updateObservation(id: InternalControlId, observation: string) {
+    updateSession({
+      internalAudit: {
+        ...data,
+        observations: { ...data.observations, [id]: observation },
+      },
+    });
+  }
+
   function updateNotes(notes: string) {
     updateSession({ internalAudit: { ...data, notes } });
   }
@@ -106,6 +115,17 @@ export default function InternalAuditPage() {
                       );
                     })}
                   </div>
+
+                  <label className="mt-4 block">
+                    <span className="text-xs font-medium text-ink-2">{t('internalAuditObservation')}</span>
+                    <textarea
+                      value={data.observations[control.id] ?? ''}
+                      onChange={(e) => updateObservation(control.id, e.target.value)}
+                      rows={2}
+                      className="mt-1.5 w-full rounded-lg border border-line bg-canvas px-3 py-2 text-sm text-ink focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20"
+                      placeholder={t('internalAuditObservationPlaceholder')}
+                    />
+                  </label>
                 </div>
               </div>
             </section>
