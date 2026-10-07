@@ -4,6 +4,8 @@
 import { useSyncExternalStore } from 'react';
 import type { DomainAuditData } from './domainScore';
 import type { HttpHeadersData } from './httpHeadersScore';
+import type { InternalAuditData } from './internalAudit';
+import type { ClientEnvironment } from './clientEnvironment';
 
 export interface AuditSession {
   /** Last domain typed on any audit page, to prefill the others. */
@@ -11,9 +13,11 @@ export interface AuditSession {
   clientName: string;
   domainAudit: DomainAuditData | null;
   httpHeaders: HttpHeadersData | null;
+  internalAudit: InternalAuditData | null;
+  clientEnvironment: ClientEnvironment | null;
 }
 
-let state: AuditSession = { domain: '', clientName: '', domainAudit: null, httpHeaders: null };
+let state: AuditSession = { domain: '', clientName: '', domainAudit: null, httpHeaders: null, internalAudit: null, clientEnvironment: null };
 const listeners = new Set<() => void>();
 
 export function getSession(): AuditSession {
@@ -26,7 +30,7 @@ export function updateSession(patch: Partial<AuditSession>): void {
 }
 
 export function clearSession(): void {
-  updateSession({ domain: '', clientName: '', domainAudit: null, httpHeaders: null });
+  updateSession({ domain: '', clientName: '', domainAudit: null, httpHeaders: null, internalAudit: null, clientEnvironment: null });
 }
 
 function subscribe(l: () => void): () => void {

@@ -9,7 +9,7 @@ interface HomePageProps {
 }
 
 const TOOL_KEY: Record<Tool, TranslationKey> = {
-  domainaudit: 'toolDomainAudit', httpheaders: 'toolHttpHeaders', email: 'toolEmail',
+  domainaudit: 'toolDomainAudit', httpheaders: 'toolHttpHeaders', internalaudit: 'toolInternalAudit', email: 'toolEmail',
   headers: 'toolHeaders', hibp: 'toolHibp', password: 'toolPassword', report: 'toolReport',
   qr: 'toolQr', encoder: 'toolEncoder', url: 'toolUrl', hash: 'toolHash', ip: 'toolIp',
   domain: 'toolDomain', ssl: 'toolSsl', privacy: 'privacy',

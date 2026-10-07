@@ -6,6 +6,8 @@ import { apiPost, apiErrorOf, errorMessage } from '../utils/apiClient';
 import { updateSession, useAuditSession } from '../utils/auditSession';
 import type { DomainAuditData } from '../utils/domainScore';
 import { isHttpHeadersInconclusive, type HttpHeadersData } from '../utils/httpHeadersScore';
+import { hasAssessedInternalControls, internalScoreCaps, isInternalAuditComplete, type EvidenceStatus } from '../utils/internalAudit';
+import { emailPlatformLabelHe, hasClientEnvironment, presenceLabelHe } from '../utils/clientEnvironment';
 import { buildReport, formatDateHe, type Report, type ReportFinding } from '../utils/report';
 import { EFFORT_HE, OWNER_HE, SEVERITY_HE } from '../utils/reportHe';
 import { SEVERITY_STYLE } from '../utils/findingsStyle';
@@ -38,7 +40,7 @@ function saveProfile(profile: ConsultantProfile): void {
   }
 }
 
-const SECTION_HE = { email: 'אבטחת הדואר האלקטרוני', web: 'אבטחת האתר' } as const;
+const SECTION_HE = { email: 'אבטחת הדואר האלקטרוני', web: 'אבטחת האתר', internal: 'בקרות אבטחה פנימיות' } as const;
 
 /** Hebrew text where "quoted" technical values are isolated left-to-right, so punctuation stays in place. */
 function He({ text }: { text: string }) {
@@ -70,12 +72,14 @@ export default function ReportPage() {
   const sameDomain = (d: { domain: string } | null) => !!d && d.domain === domain.trim().toLowerCase();
   const domainAudit = sameDomain(session.domainAudit) ? session.domainAudit : null;
   const httpHeaders = sameDomain(session.httpHeaders) ? session.httpHeaders : null;
+  const internalAudit = session.internalAudit;
+  const clientEnvironment = session.clientEnvironment;
   const missing = !domainAudit || !httpHeaders;
   const webInconclusive = httpHeaders ? isHttpHeadersInconclusive(httpHeaders) : false;
 
   const report = useMemo(
-    () => buildReport({ clientName, auditor: profile.name, domain, date: new Date(), domainAudit, httpHeaders }),
-    [clientName, profile.name, domain, domainAudit, httpHeaders],
+    () => buildReport({ clientName, auditor: profile.name, domain, date: new Date(), domainAudit, httpHeaders, internalAudit, clientEnvironment }),
+    [clientName, profile.name, domain, domainAudit, httpHeaders, internalAudit, clientEnvironment],
   );
 
   function updateProfile(patch: Partial<ConsultantProfile>) {
@@ -204,7 +208,13 @@ export default function ReportPage() {
   );
 }
 
-function Problem({ r }: { r: ReportFinding }) {
+function evidenceLabelHe(value: EvidenceStatus | undefined): string {
+  if (value === 'verified') return 'אומת על ידי היועץ';
+  if (value === 'client') return 'הוצהר על ידי הלקוח';
+  return 'לא אומת';
+}
+
+function Problem({ r, evidence }: { r: ReportFinding; evidence?: EvidenceStatus }) {
   return (
     <tr className="align-top border-t border-line break-inside-avoid">
       <td className="py-2.5 pe-3">
@@ -215,6 +225,12 @@ function Problem({ r }: { r: ReportFinding }) {
       <td className="py-2.5 pe-3">
         <p className="font-semibold text-ink"><He text={r.he.title} /></p>
         <p className="text-ink-2 mt-0.5"><He text={r.he.impact} /></p>
+        {r.section === 'internal' && (
+          <p className="text-xs text-muted mt-1.5">מקור: {evidenceLabelHe(evidence)}</p>
+        )}
+        {r.section === 'internal' && r.finding.detail && (
+          <p className="text-xs text-muted mt-1">תצפית: <bdi>{r.finding.detail}</bdi></p>
+        )}
       </td>
       <td className="py-2.5 text-ink-2 whitespace-nowrap">{EFFORT_HE[r.he.effort].split(' — ')[0]}</td>
     </tr>
@@ -222,8 +238,9 @@ function Problem({ r }: { r: ReportFinding }) {
 }
 
 function ReportDocument({ report, profile }: { report: Report; profile: ConsultantProfile }) {
-  const { input, overall, webInconclusive, sections, problems, good, topRisks, thisWeek } = report;
+  const { input, overall, webInconclusive, sections, problems, good, topRisks, thisWeek, remediationPlan } = report;
   const client = input.clientName.trim() || input.domain;
+  const internalCaps = input.internalAudit ? internalScoreCaps(input.internalAudit) : [];
 
   return (
     <article
@@ -258,7 +275,7 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
             {profile.website && <p>{profile.website}</p>}
           </div>
           <p className="mt-8 text-xs text-muted">
-            בדיקה חיצונית המבוססת על מידע ציבורי בלבד. אין בדוח זה התחייבות לעמידה בתקן או בדרישה רגולטורית.
+            הדוח משלב בדיקות חיצוניות המבוססות על מידע ציבורי עם תשובות ותצפיות שנאספו במהלך הבדיקה. אין בדוח זה התחייבות לעמידה בתקן או בדרישה רגולטורית.
           </p>
         </div>
       </section>
@@ -281,7 +298,13 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
           <div className="ms-auto flex gap-6">
             {sections.map((s) => (
               <div key={s.key} className="text-center">
-                <GradeBadge grade={s.score.grade} size="sm" />
+                {s.includedInOverall ? (
+                  <GradeBadge grade={s.score.grade} size="sm" />
+                ) : (
+                  <div className="flex h-11 min-w-11 items-center justify-center rounded-xl border-2 border-slate-300 bg-slate-50 px-2 text-[11px] font-bold text-slate-700">
+                    בתהליך
+                  </div>
+                )}
                 <p className="text-xs text-muted mt-1.5 max-w-[7rem]">{SECTION_HE[s.key]}</p>
               </div>
             ))}
@@ -293,6 +316,22 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
             )}
           </div>
         </div>
+        {sections.some((s) => s.key === 'internal' && !s.includedInOverall) && (
+          <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 px-5 py-4 text-slate-800">
+            <p className="font-semibold">שאלון האבטחה הפנימי עדיין בתהליך</p>
+            <p className="mt-1 text-sm">הממצאים שכבר נבדקו מופיעים בדוח, אך הציון הפנימי אינו נכלל בציון הכולל עד שכל הבקרות נבדקו או סומנו כלא רלוונטיות.</p>
+          </div>
+        )}
+        {internalCaps.length > 0 && isInternalAuditComplete(input.internalAudit) && (
+          <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-amber-900">
+            <p className="font-semibold">הציון הפנימי הוגבל בגלל בקרה קריטית חסרה</p>
+            <ul className="mt-1 list-disc ps-5 text-sm space-y-1">
+              {internalCaps.map((cap) => (
+                <li key={cap.controlId}>{cap.reasonHe} ציון פנימי מרבי: {cap.maxScore}/100.</li>
+              ))}
+            </ul>
+          </div>
+        )}
         {webInconclusive && (
           <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-amber-900">
             <p className="font-semibold">בדיקת האתר לא הושלמה</p>
@@ -325,6 +364,63 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
         )}
       </section>
 
+      {hasClientEnvironment(input.clientEnvironment ?? null) && (
+        <section className="py-6 border-b border-line break-inside-avoid">
+          <h2 className="text-lg font-bold mb-3">סביבת הלקוח</h2>
+          <div className="grid gap-x-8 gap-y-2 sm:grid-cols-2 text-sm">
+            {input.clientEnvironment?.users && (
+              <p><span className="text-muted">משתמשים:</span> <bdi>{input.clientEnvironment.users}</bdi></p>
+            )}
+            {input.clientEnvironment?.endpoints && (
+              <p><span className="text-muted">מחשבים / תחנות:</span> <bdi>{input.clientEnvironment.endpoints}</bdi></p>
+            )}
+            {input.clientEnvironment?.emailPlatform && (
+              <p><span className="text-muted">מערכת דואר:</span> <bdi>{emailPlatformLabelHe(input.clientEnvironment.emailPlatform)}</bdi></p>
+            )}
+            {input.clientEnvironment?.servers && (
+              <p><span className="text-muted">שרתים:</span> <bdi>{presenceLabelHe(input.clientEnvironment.servers)}</bdi></p>
+            )}
+            {input.clientEnvironment?.endpointProtection && (
+              <p><span className="text-muted">Endpoint / EDR:</span> <bdi>{input.clientEnvironment.endpointProtection}</bdi></p>
+            )}
+            {input.clientEnvironment?.backupSolution && (
+              <p><span className="text-muted">גיבוי:</span> <bdi>{input.clientEnvironment.backupSolution}</bdi></p>
+            )}
+            {input.clientEnvironment?.remoteAccess && (
+              <p className="sm:col-span-2"><span className="text-muted">גישה מרחוק:</span> <bdi>{input.clientEnvironment.remoteAccess}</bdi></p>
+            )}
+          </div>
+          <p className="mt-3 text-xs text-muted">מידע זה מתאר את סביבת הלקוח בלבד ואינו משפיע על הציון.</p>
+        </section>
+      )}
+
+      {/* Audit scope */}
+      <section className="py-6 border-b border-line break-inside-avoid">
+        <h2 className="text-lg font-bold mb-3">היקף הבדיקה</h2>
+        <div className="grid gap-2 sm:grid-cols-3">
+          <div className="rounded-lg border border-line bg-sunken px-4 py-3">
+            <p className="text-xs text-muted">אבטחת דואר</p>
+            <p className="font-semibold mt-1">{input.domainAudit ? 'הושלם ונכלל בציון' : 'לא בוצע'}</p>
+          </div>
+          <div className="rounded-lg border border-line bg-sunken px-4 py-3">
+            <p className="text-xs text-muted">אבטחת אתר</p>
+            <p className="font-semibold mt-1">
+              {!input.httpHeaders ? 'לא בוצע' : webInconclusive ? 'לא ניתן להשלים — לא נכלל בציון' : 'הושלם ונכלל בציון'}
+            </p>
+          </div>
+          <div className="rounded-lg border border-line bg-sunken px-4 py-3">
+            <p className="text-xs text-muted">בקרות פנימיות</p>
+            <p className="font-semibold mt-1">
+              {!hasAssessedInternalControls(input.internalAudit)
+                ? 'לא בוצע'
+                : isInternalAuditComplete(input.internalAudit)
+                  ? 'הושלם ונכלל בציון'
+                  : 'בתהליך — הממצאים מוצגים אך הציון לא נכלל'}
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Findings table */}
       {problems.length > 0 && (
         <section className="py-6 border-b border-line">
@@ -338,9 +434,43 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
               </tr>
             </thead>
             <tbody>
-              {problems.map((r) => <Problem key={r.finding.id} r={r} />)}
+              {problems.map((r) => <Problem key={r.finding.id} r={r} evidence={r.section === 'internal' ? input.internalAudit?.evidence?.[r.finding.id.replace(/^internal-/, '').replace(/-(ok|yes|partial|no)$/, '') as keyof NonNullable<typeof input.internalAudit>['evidence']] : undefined} />)}
             </tbody>
           </table>
+        </section>
+      )}
+
+      {problems.length > 0 && (
+        <section className="py-6 border-b border-line">
+          <h2 className="text-lg font-bold mb-1">תוכנית תיקון 7 / 30 / 90 ימים</h2>
+          <p className="text-ink-2 mb-4">כל ממצא משויך לחלון זמן אחד לפי חומרה ומאמץ. מתחילים בפעולות הדחופות והמהירות ביותר.</p>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {([
+              ['7 ימים', remediationPlan.days7, 'פעולות דחופות'],
+              ['30 ימים', remediationPlan.days30, 'תיקונים חשובים'],
+              ['90 ימים', remediationPlan.days90, 'שיפורים ותכנון'],
+            ] as const).map(([label, items, subtitle]) => (
+              <div key={label} className="rounded-lg border border-line bg-sunken px-4 py-4 break-inside-avoid">
+                <p className="text-lg font-bold text-ink">{label}</p>
+                <p className="text-xs text-muted mt-0.5">{subtitle} · {items.length}</p>
+                {items.length > 0 ? (
+                  <ol className="mt-3 space-y-3">
+                    {items.map((r, i) => (
+                      <li key={r.finding.id} className="text-sm">
+                        <p className="font-semibold">{i + 1}. <He text={r.he.title} /></p>
+                        <p className="text-ink-2 mt-0.5"><He text={r.he.fix} /></p>
+                        <p className="text-xs text-muted mt-1">
+                          {SEVERITY_HE[r.finding.severity]} · <bdi>{EFFORT_HE[r.he.effort].split(' — ')[0]}</bdi> · <bdi>{OWNER_HE[r.he.owner]}</bdi>
+                        </p>
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className="mt-3 text-sm text-muted">אין פעולות בחלון זמן זה.</p>
+                )}
+              </div>
+            ))}
+          </div>
         </section>
       )}
 
@@ -396,6 +526,34 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
               <p>DNSSEC: {input.domainAudit.dnssec ? 'yes' : 'no'} · MTA-STS: {input.domainAudit.mtaSts ? 'yes' : 'no'} · TLS-RPT: {input.domainAudit.tlsRpt ? 'yes' : 'no'}</p>
             </div>
           )}
+          {hasClientEnvironment(input.clientEnvironment ?? null) && (
+            <div className="break-inside-avoid">
+              <p className="font-sans font-semibold text-ink text-xs mb-1">Client environment</p>
+              {input.clientEnvironment?.users && <p>Users: {input.clientEnvironment.users}</p>}
+              {input.clientEnvironment?.endpoints && <p>Endpoints: {input.clientEnvironment.endpoints}</p>}
+              {input.clientEnvironment?.emailPlatform && <p>Email platform: {input.clientEnvironment.emailPlatform}</p>}
+              {input.clientEnvironment?.servers && <p>Servers: {input.clientEnvironment.servers}</p>}
+              {input.clientEnvironment?.endpointProtection && <p>Endpoint protection: {input.clientEnvironment.endpointProtection}</p>}
+              {input.clientEnvironment?.backupSolution && <p>Backup: {input.clientEnvironment.backupSolution}</p>}
+              {input.clientEnvironment?.remoteAccess && <p>Remote access: {input.clientEnvironment.remoteAccess}</p>}
+            </div>
+          )}
+          {input.internalAudit && (
+            <div className="break-inside-avoid">
+              <p className="font-sans font-semibold text-ink text-xs mb-1">Internal controls</p>
+              {Object.entries(input.internalAudit.answers).map(([key, value]) => {
+                const observation = input.internalAudit?.observations?.[key as keyof typeof input.internalAudit.observations] ?? '';
+                return (
+                  <div key={key}>
+                    <p>{key}: {value}</p>
+                    <p>  evidence: {input.internalAudit?.evidence?.[key as keyof typeof input.internalAudit.evidence] ?? 'unverified'}</p>
+                    {observation && <p className="whitespace-pre-wrap">  observation: {observation}</p>}
+                  </div>
+                );
+              })}
+              {input.internalAudit.notes && <p className="whitespace-pre-wrap">Notes: {input.internalAudit.notes}</p>}
+            </div>
+          )}
           {input.httpHeaders && (
             <div className="break-inside-avoid">
               <p className="font-sans font-semibold text-ink text-xs mb-1">HTTP — {input.httpHeaders.https.finalUrl ?? input.httpHeaders.domain}</p>
@@ -409,7 +567,7 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
       </section>
 
       <footer className="mt-8 pt-4 border-t border-line text-xs text-muted">
-        הבדיקה נערכה מבחוץ, על סמך מידע ציבורי בלבד (DNS וכותרות האתר), בתאריך {formatDateHe(input.date)}. היא משקפת את המצב במועד הבדיקה ואינה מהווה אישור עמידה בדרישות חוק או תקן.
+        הבדיקה נערכה בתאריך {formatDateHe(input.date)} ומשלבת מידע ציבורי (DNS וכותרות האתר) עם תשובות ותצפיות שנאספו מהלקוח. היא משקפת את המצב במועד הבדיקה ואינה מהווה אישור עמידה בדרישות חוק או תקן.
       </footer>
     </article>
   );
