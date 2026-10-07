@@ -5,6 +5,7 @@ import { scoreDomain, type DomainAuditData } from './domainScore';
 import { isHttpHeadersInconclusive, scoreHttpHeaders, type HttpHeadersData } from './httpHeadersScore';
 import { heText, type HeText } from './reportHe';
 import { hasAssessedInternalControls, isInternalAuditComplete, scoreInternalAudit, type InternalAuditData } from './internalAudit';
+import type { ClientEnvironment } from './clientEnvironment';
 
 export interface ReportInput {
   clientName: string;
@@ -14,6 +15,7 @@ export interface ReportInput {
   domainAudit: DomainAuditData | null;
   httpHeaders: HttpHeadersData | null;
   internalAudit: InternalAuditData | null;
+  clientEnvironment: ClientEnvironment | null;
 }
 
 export interface ReportFinding {
