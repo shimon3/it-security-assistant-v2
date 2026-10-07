@@ -1,6 +1,7 @@
-import { Mail, Globe, Hash, Lock, Shield, Search, ShieldAlert, Code2, X, Home, ShieldCheck, MailSearch, QrCode } from 'lucide-react';
+import { Mail, Globe, Hash, Lock, Shield, Search, ShieldAlert, Code2, X, Home, ShieldCheck, MailSearch, QrCode, Briefcase, FileLock2 } from 'lucide-react';
+import { isPersonalOnly, useAuditMode } from '../utils/auditMode';
 
-export type Tool = 'email' | 'url' | 'hash' | 'password' | 'ip' | 'domain' | 'hibp' | 'encoder' | 'ssl' | 'headers' | 'qr';
+export type Tool = 'email' | 'url' | 'hash' | 'password' | 'ip' | 'domain' | 'hibp' | 'encoder' | 'ssl' | 'headers' | 'qr' | 'privacy';
 
 interface SidebarProps {
   activeTool: Tool;
@@ -22,9 +23,13 @@ const tools: { id: Tool; label: string; icon: React.ElementType; desc: string; i
   { id: 'ssl',      label: 'SSL/TLS Checker',      icon: ShieldCheck, desc: 'Cert grade & expiry',     isNew: true },
   { id: 'headers',  label: 'Header Analyzer',      icon: MailSearch,  desc: 'SPF / DKIM / spoofing',   isNew: true },
   { id: 'qr',       label: 'QR Code Scanner',      icon: QrCode,      desc: 'Decode & scan',           isNew: true },
+  { id: 'privacy',  label: 'Data & Privacy',       icon: FileLock2,   desc: 'What leaves this app'    },
 ];
 
 export default function Sidebar({ activeTool, onSelect, isOpen = false, onClose, onHome }: SidebarProps) {
+  const [auditMode, setAuditMode] = useAuditMode();
+  const visibleTools = auditMode ? tools.filter((t) => !isPersonalOnly(t.id)) : tools;
+
   return (
     <aside
       className={[
@@ -56,7 +61,7 @@ export default function Sidebar({ activeTool, onSelect, isOpen = false, onClose,
       {/* Tools nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         <p className="text-xs text-slate-600 font-semibold uppercase tracking-wider px-2 mb-3">Tools</p>
-        {tools.map(({ id, label, icon: Icon, desc, isNew }) => {
+        {visibleTools.map(({ id, label, icon: Icon, desc, isNew }) => {
           const active = activeTool === id;
           return (
             <button
@@ -97,6 +102,26 @@ export default function Sidebar({ activeTool, onSelect, isOpen = false, onClose,
           </button>
         </div>
       )}
+
+      {/* Audit mode switch */}
+      <div className="px-3 pb-3">
+        <label className="flex items-start gap-3 px-3 py-2.5 rounded-lg border border-slate-800 bg-slate-950/40 cursor-pointer">
+          <Briefcase className={`w-4 h-4 shrink-0 mt-0.5 ${auditMode ? 'text-amber-400' : 'text-slate-500'}`} />
+          <span className="flex-1 min-w-0">
+            <span className={`block text-sm font-medium ${auditMode ? 'text-amber-300' : 'text-slate-300'}`}>Audit mode</span>
+            <span className="block text-xs text-slate-500 leading-snug">
+              Client work: hides non-commercial APIs, no email history.
+            </span>
+          </span>
+          <input
+            type="checkbox"
+            className="mt-1 accent-amber-400"
+            checked={auditMode}
+            onChange={(e) => setAuditMode(e.target.checked)}
+            aria-label="Audit mode"
+          />
+        </label>
+      </div>
 
       <div className="px-4 py-4 border-t border-slate-800">
         <p className="text-xs text-slate-700 text-center leading-relaxed">For security awareness use only</p>

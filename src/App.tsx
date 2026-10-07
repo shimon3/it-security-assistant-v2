@@ -15,6 +15,8 @@ import QrScannerPage from './pages/QrScannerPage';
 import Sidebar, { Tool } from './components/Sidebar';
 import TokenPrompt from './components/TokenPrompt';
 import { AUTH_REQUIRED_EVENT } from './utils/apiClient';
+import { isAuditMode, isPersonalOnly, useAuditMode } from './utils/auditMode';
+import PrivacyPage from './pages/PrivacyPage';
 
 export default function App() {
   const [inApp, setInApp] = useState(false);
@@ -22,6 +24,12 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [qrUrl, setQrUrl] = useState('');
   const [askToken, setAskToken] = useState(false);
+  const [auditMode] = useAuditMode();
+
+  // Leave a personal-only tool as soon as audit mode is switched on.
+  useEffect(() => {
+    if (auditMode && isPersonalOnly(activeTool)) setActiveTool('email');
+  }, [auditMode, activeTool]);
 
   useEffect(() => {
     const onAuthRequired = () => setAskToken(true);
@@ -31,6 +39,7 @@ export default function App() {
 
   useEffect(() => {
     function handleQrUrl(e: Event) {
+      if (isAuditMode()) return; // URL reputation uses VirusTotal: personal use only
       const url = (e as CustomEvent<string>).detail;
       setQrUrl(url);
       setActiveTool('url');
@@ -88,6 +97,7 @@ export default function App() {
         {activeTool === 'ssl'     && <SslCheckerPage />}
         {activeTool === 'headers' && <HeaderAnalyzerPage />}
         {activeTool === 'qr'      && <QrScannerPage />}
+        {activeTool === 'privacy' && <PrivacyPage />}
       </div>
     </div>
   );

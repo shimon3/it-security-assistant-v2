@@ -2,10 +2,12 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { QrCode, Upload, Camera, X, ExternalLink } from 'lucide-react';
 import jsQR from 'jsqr';
 import PageHeader from '../components/PageHeader';
+import { useAuditMode } from '../utils/auditMode';
 
 type Mode = 'upload' | 'camera';
 
 export default function QrScannerPage() {
+  const [auditMode] = useAuditMode();
   const [mode, setMode] = useState<Mode>('upload');
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -249,12 +251,12 @@ export default function QrScannerPage() {
                     <ExternalLink className="w-3 h-3 shrink-0" />
                     URL detected — scan before opening
                   </div>
-                  <button
+                  {!auditMode && <button
                     onClick={() => window.dispatchEvent(new CustomEvent('qr-scan-url', { detail: result }))}
                     className="flex items-center justify-center gap-1.5 text-xs text-sky-400 hover:text-sky-300 border border-sky-500/30 hover:border-sky-500/50 px-3 py-1.5 rounded-lg transition-all"
                   >
                     Scan URL with VirusTotal →
-                  </button>
+                  </button>}
                 </div>
               )}
             </div>
