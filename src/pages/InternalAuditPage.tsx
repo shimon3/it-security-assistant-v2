@@ -4,9 +4,11 @@ import { GradeCard } from '../components/AuditResult';
 import { useAuditSession, updateSession } from '../utils/auditSession';
 import {
   INTERNAL_CONTROLS,
+  INTERNAL_CATEGORIES,
   emptyInternalAudit,
   hasAssessedInternalControls,
   scoreInternalAudit,
+  internalScoreCaps,
   type InternalAnswer,
   type InternalAuditData,
   type InternalControlId,
@@ -38,7 +40,8 @@ export default function InternalAuditPage() {
   const environment = session.clientEnvironment ?? emptyClientEnvironment();
   const assessed = hasAssessedInternalControls(data);
   const score = assessed ? scoreInternalAudit(data) : null;
-  const answered = INTERNAL_CONTROLS.filter((c) => data.answers[c.id] !== 'unknown').length;
+  const answered = INTERNAL_CONTROLS.filter((c) => (data.answers?.[c.id] ?? 'unknown') !== 'unknown').length;
+  const caps = internalScoreCaps(data);
 
   function updateEnvironment(patch: Partial<ClientEnvironment>) {
     updateSession({ clientEnvironment: { ...environment, ...patch } });
@@ -49,7 +52,7 @@ export default function InternalAuditPage() {
       ...data,
       answers: { ...data.answers, [id]: answer },
     };
-    const allReviewed = INTERNAL_CONTROLS.every((c) => next.answers[c.id] !== 'unknown');
+    const allReviewed = INTERNAL_CONTROLS.every((c) => (next.answers?.[c.id] ?? 'unknown') !== 'unknown');
     next.completedAt = allReviewed ? new Date().toISOString() : null;
     updateSession({ internalAudit: next });
   }
@@ -183,76 +186,92 @@ export default function InternalAuditPage() {
           <p className="mt-3 text-xs text-muted">{t('internalAuditPrivacy')}</p>
         </div>
 
-        <div className="space-y-4">
-          {INTERNAL_CONTROLS.map((control, index) => (
-            <section key={control.id} className="rounded-xl border border-line bg-surface p-5">
-              <div className="flex gap-3">
-                <span className="shrink-0 flex h-7 w-7 items-center justify-center rounded-full bg-sunken text-xs font-semibold text-ink-2">
-                  {index + 1}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <h2 className="font-semibold text-ink">
-                    {language === 'he' ? control.labelHe : control.labelEn}
-                  </h2>
-                  <p className="mt-1 text-sm text-muted">
-                    {language === 'he' ? control.helpHe : control.helpEn}
-                  </p>
-
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {ANSWERS.map((option) => {
-                      const selected = data.answers[control.id] === option.value;
-                      return (
-                        <button
-                          type="button"
-                          key={option.value}
-                          onClick={() => updateAnswer(control.id, option.value)}
-                          className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${answerClass(option.value, selected)}`}
-                          aria-pressed={selected}
-                        >
-                          {language === 'he' ? option.he : option.en}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <div className="mt-4">
-                    <p className="text-xs font-medium text-ink-2">{t('internalAuditEvidence')}</p>
-                    <div className="mt-1.5 flex flex-wrap gap-2">
-                      {([
-                        ['client', t('internalAuditEvidenceClient')],
-                        ['verified', t('internalAuditEvidenceVerified')],
-                        ['unverified', t('internalAuditEvidenceUnverified')],
-                      ] as const).map(([value, label]) => {
-                        const selected = (data.evidence?.[control.id] ?? 'unverified') === value;
-                        return (
-                          <button
-                            type="button"
-                            key={value}
-                            onClick={() => updateEvidence(control.id, value)}
-                            className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${selected ? 'border-brand bg-brand-soft text-brand-strong' : 'border-line bg-surface text-ink-2 hover:border-brand'}`}
-                            aria-pressed={selected}
-                          >
-                            {label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <label className="mt-4 block">
-                    <span className="text-xs font-medium text-ink-2">{t('internalAuditObservation')}</span>
-                    <textarea
-                      value={data.observations[control.id] ?? ''}
-                      onChange={(e) => updateObservation(control.id, e.target.value)}
-                      rows={2}
-                      className="mt-1.5 w-full rounded-lg border border-line bg-canvas px-3 py-2 text-sm text-ink focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20"
-                      placeholder={t('internalAuditObservationPlaceholder')}
-                    />
-                  </label>
+        <div className="space-y-7">
+          {INTERNAL_CATEGORIES.map((category) => {
+            const controls = INTERNAL_CONTROLS.filter((control) => control.category === category.id);
+            return (
+              <section key={category.id} className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-lg font-bold text-ink">{language === 'he' ? category.labelHe : category.labelEn}</h2>
+                  <span className="text-xs text-muted">{controls.length}</span>
+                  <div className="h-px flex-1 bg-line" />
                 </div>
-              </div>
-            </section>
-          ))}
+                {controls.map((control) => {
+                  const index = INTERNAL_CONTROLS.findIndex((item) => item.id === control.id);
+                  const answer = data.answers?.[control.id] ?? 'unknown';
+                  return (
+                    <section key={control.id} className="rounded-xl border border-line bg-surface p-5">
+                      <div className="flex gap-3">
+                        <span className="shrink-0 flex h-7 w-7 items-center justify-center rounded-full bg-sunken text-xs font-semibold text-ink-2">
+                          {index + 1}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-semibold text-ink">
+                            {language === 'he' ? control.labelHe : control.labelEn}
+                          </h3>
+                          <p className="mt-1 text-sm text-muted">
+                            {language === 'he' ? control.helpHe : control.helpEn}
+                          </p>
+
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            {ANSWERS.map((option) => {
+                              const selected = answer === option.value;
+                              return (
+                                <button
+                                  type="button"
+                                  key={option.value}
+                                  onClick={() => updateAnswer(control.id, option.value)}
+                                  className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${answerClass(option.value, selected)}`}
+                                  aria-pressed={selected}
+                                >
+                                  {language === 'he' ? option.he : option.en}
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          <div className="mt-4">
+                            <p className="text-xs font-medium text-ink-2">{t('internalAuditEvidence')}</p>
+                            <div className="mt-1.5 flex flex-wrap gap-2">
+                              {([
+                                ['client', t('internalAuditEvidenceClient')],
+                                ['verified', t('internalAuditEvidenceVerified')],
+                                ['unverified', t('internalAuditEvidenceUnverified')],
+                              ] as const).map(([value, label]) => {
+                                const selected = (data.evidence?.[control.id] ?? 'unverified') === value;
+                                return (
+                                  <button
+                                    type="button"
+                                    key={value}
+                                    onClick={() => updateEvidence(control.id, value)}
+                                    className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${selected ? 'border-brand bg-brand-soft text-brand-strong' : 'border-line bg-surface text-ink-2 hover:border-brand'}`}
+                                    aria-pressed={selected}
+                                  >
+                                    {label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          <label className="mt-4 block">
+                            <span className="text-xs font-medium text-ink-2">{t('internalAuditObservation')}</span>
+                            <textarea
+                              value={data.observations?.[control.id] ?? ''}
+                              onChange={(e) => updateObservation(control.id, e.target.value)}
+                              rows={2}
+                              className="mt-1.5 w-full rounded-lg border border-line bg-canvas px-3 py-2 text-sm text-ink focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20"
+                              placeholder={t('internalAuditObservationPlaceholder')}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </section>
+                  );
+                })}
+              </section>
+            );
+          })}
         </div>
 
         <label className="block rounded-xl border border-line bg-surface p-5">
@@ -268,11 +287,25 @@ export default function InternalAuditPage() {
         </label>
 
         {score && (
-          <GradeCard
-            subject={t('internalAuditTitle')}
-            score={score}
-            copyText=""
-          />
+          <>
+            {caps.length > 0 && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-amber-900">
+                <p className="font-semibold">{language === 'he' ? 'הגבלת ציון בגלל בקרות קריטיות' : 'Score capped by critical controls'}</p>
+                <ul className="mt-2 list-disc ps-5 space-y-1 text-sm">
+                  {caps.map((cap) => (
+                    <li key={cap.controlId}>
+                      {language === 'he' ? cap.reasonHe : cap.reasonEn} {language === 'he' ? 'ציון מרבי' : 'Maximum score'}: {cap.maxScore}/100.
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <GradeCard
+              subject={t('internalAuditTitle')}
+              score={score}
+              copyText=""
+            />
+          </>
         )}
       </div>
     </div>
