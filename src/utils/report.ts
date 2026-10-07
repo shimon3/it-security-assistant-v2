@@ -15,7 +15,7 @@ export interface ReportInput {
   domainAudit: DomainAuditData | null;
   httpHeaders: HttpHeadersData | null;
   internalAudit: InternalAuditData | null;
-  clientEnvironment: ClientEnvironment | null;
+  clientEnvironment?: ClientEnvironment | null;
 }
 
 export interface ReportFinding {
