@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Lock, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import zxcvbn from 'zxcvbn';
 import PageHeader from '../components/PageHeader';
+import { useLanguage } from '../i18n';
 
 function cryptoRandIndex(n: number): number {
   const limit = Math.floor(0xFFFFFFFF / n) * n;
@@ -35,12 +36,12 @@ function generatePassword(length = 18): string {
   return chars.join('');
 }
 
-const SCORE = [
-  { label: 'Very weak', text: 'text-red-700', bar: 'bg-red-600' },
-  { label: 'Weak', text: 'text-orange-700', bar: 'bg-orange-600' },
-  { label: 'Fair', text: 'text-amber-700', bar: 'bg-amber-600' },
-  { label: 'Strong', text: 'text-sky-700', bar: 'bg-sky-600' },
-  { label: 'Very strong', text: 'text-emerald-700', bar: 'bg-emerald-600' },
+const SCORE_STYLE = [
+  { text: 'text-red-700', bar: 'bg-red-600' },
+  { text: 'text-orange-700', bar: 'bg-orange-600' },
+  { text: 'text-amber-700', bar: 'bg-amber-600' },
+  { text: 'text-sky-700', bar: 'bg-sky-600' },
+  { text: 'text-emerald-700', bar: 'bg-emerald-600' },
 ] as const;
 
 export default function PasswordCheckerPage() {
@@ -48,9 +49,11 @@ export default function PasswordCheckerPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [generatedPassword, setGeneratedPassword] = useState('');
   const [copied, setCopied] = useState(false);
+  const { t } = useLanguage();
 
   const result = useMemo(() => (password ? zxcvbn(password) : null), [password]);
-  const style = result ? SCORE[result.score] : SCORE[0];
+  const style = result ? SCORE_STYLE[result.score] : SCORE_STYLE[0];
+  const labels = [t('veryWeak'), t('weak'), t('fair'), t('strong'), t('veryStrong')];
   const barWidth = result ? `${((result.score + 1) / 5) * 100}%` : '0%';
 
   function handleGenerate() {
@@ -68,20 +71,20 @@ export default function PasswordCheckerPage() {
     <div className="min-h-screen bg-canvas text-ink">
       <PageHeader
         icon={<Lock className="w-5 h-5 text-brand" />}
-        title="Password strength"
-        description="Realistic password analysis using zxcvbn pattern matching, plus a secure local generator."
+        title={t('passwordTitle')}
+        description={t('passwordDesc')}
       />
 
       <div className="max-w-2xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-8">
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-ink-2">Password to evaluate</label>
+            <label className="text-sm font-medium text-ink-2">{t('passwordLabel')}</label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Type a password..."
+                placeholder={t('passwordPlaceholder')}
                 autoComplete="new-password"
                 className="w-full bg-surface border border-line rounded-xl px-4 py-3 pe-11 text-ink placeholder-faint focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all text-sm"
               />
@@ -94,14 +97,14 @@ export default function PasswordCheckerPage() {
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-            <p className="text-xs text-faint">The password stays in this browser. It is not sent to the server.</p>
+            <p className="text-xs text-faint">{t('passwordPrivacy')}</p>
           </div>
 
           {result && (
             <div className="space-y-4 animate-fade-in">
               <div className="bg-surface border border-line rounded-xl p-5 space-y-3">
                 <div className="flex items-center justify-between gap-4">
-                  <span className={`font-bold text-lg ${style.text}`}>{style.label}</span>
+                  <span className={`font-bold text-lg ${style.text}`}>{labels[result.score]}</span>
                   <span className="text-xs text-muted">zxcvbn score {result.score}/4</span>
                 </div>
                 <div className="h-2.5 bg-sunken rounded-full overflow-hidden">
@@ -111,20 +114,20 @@ export default function PasswordCheckerPage() {
                   />
                 </div>
                 <div className="flex justify-between text-xs text-faint">
-                  <span>Very weak</span>
-                  <span>Very strong</span>
+                  <span>{t('veryWeak')}</span>
+                  <span>{t('veryStrong')}</span>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="bg-surface border border-line rounded-xl p-4">
-                  <p className="text-xs text-muted mb-1">Offline fast attack estimate</p>
+                  <p className="text-xs text-muted mb-1">{t('offlineEstimate')}</p>
                   <p className={`font-bold text-base ${style.text}`}>
                     {result.crack_times_display.offline_fast_hashing_1e10_per_second}
                   </p>
                 </div>
                 <div className="bg-surface border border-line rounded-xl p-4">
-                  <p className="text-xs text-muted mb-1">Online throttled estimate</p>
+                  <p className="text-xs text-muted mb-1">{t('onlineEstimate')}</p>
                   <p className="font-bold text-base text-ink">
                     {result.crack_times_display.online_throttling_100_per_hour}
                   </p>
@@ -133,7 +136,7 @@ export default function PasswordCheckerPage() {
 
               {(result.feedback.warning || result.feedback.suggestions.length > 0) && (
                 <div className="bg-surface border border-line rounded-xl p-5 space-y-2">
-                  <p className="text-sm font-semibold text-ink-2 mb-3">Why this score?</p>
+                  <p className="text-sm font-semibold text-ink-2 mb-3">{t('whyScore')}</p>
                   {result.feedback.warning && (
                     <p className="text-sm text-amber-800">{result.feedback.warning}</p>
                   )}
@@ -148,7 +151,7 @@ export default function PasswordCheckerPage() {
 
               {result.score === 4 && (
                 <div className="flex items-center gap-2 text-emerald-700 text-sm bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
-                  ✓ Strong against the common patterns zxcvbn checks.
+                  ✓ {t('strongMessage')}
                 </div>
               )}
             </div>
@@ -159,8 +162,8 @@ export default function PasswordCheckerPage() {
 
         <div className="space-y-4">
           <div>
-            <h2 className="text-base font-semibold text-ink">Password generator</h2>
-            <p className="text-muted text-sm mt-1">Generate an 18-character password with the browser cryptographic random generator.</p>
+            <h2 className="text-base font-semibold text-ink">{t('generatorTitle')}</h2>
+            <p className="text-muted text-sm mt-1">{t('generatorDesc')}</p>
           </div>
 
           <button
@@ -169,7 +172,7 @@ export default function PasswordCheckerPage() {
             className="flex items-center gap-2 bg-sunken hover:bg-line border border-line-strong text-ink font-medium px-4 py-2.5 rounded-xl transition-all text-sm"
           >
             <RefreshCw className="w-4 h-4" />
-            Generate password
+            {t('generatePassword')}
           </button>
 
           {generatedPassword && (
@@ -178,13 +181,13 @@ export default function PasswordCheckerPage() {
                 {generatedPassword}
               </div>
               <div className="flex items-center justify-between gap-3">
-                <span className="text-xs text-faint">18 characters · upper + lower + digits + symbols</span>
+                <span className="text-xs text-faint">{t('charsInfo')}</span>
                 <button
                   type="button"
                   onClick={handleCopy}
                   className="text-xs text-muted hover:text-ink border border-line-strong px-3 py-1.5 rounded-lg transition-all"
                 >
-                  {copied ? <span className="text-emerald-700">✓ Copied</span> : 'Copy'}
+                  {copied ? <span className="text-emerald-700">✓ {t('copied')}</span> : t('copy')}
                 </button>
               </div>
             </div>
