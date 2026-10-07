@@ -10,6 +10,7 @@ import {
   type InternalAnswer,
   type InternalAuditData,
   type InternalControlId,
+  type EvidenceStatus,
 } from '../utils/internalAudit';
 import { useLanguage } from '../i18n';
 import { emptyClientEnvironment, type ClientEnvironment, type EmailPlatform, type Presence } from '../utils/clientEnvironment';
@@ -51,6 +52,15 @@ export default function InternalAuditPage() {
     const allReviewed = INTERNAL_CONTROLS.every((c) => next.answers[c.id] !== 'unknown');
     next.completedAt = allReviewed ? new Date().toISOString() : null;
     updateSession({ internalAudit: next });
+  }
+
+  function updateEvidence(id: InternalControlId, evidence: EvidenceStatus) {
+    updateSession({
+      internalAudit: {
+        ...data,
+        evidence: { ...data.evidence, [id]: evidence },
+      },
+    });
   }
 
   function updateObservation(id: InternalControlId, observation: string) {
@@ -203,6 +213,30 @@ export default function InternalAuditPage() {
                         </button>
                       );
                     })}
+                  </div>
+
+                  <div className="mt-4">
+                    <p className="text-xs font-medium text-ink-2">{t('internalAuditEvidence')}</p>
+                    <div className="mt-1.5 flex flex-wrap gap-2">
+                      {([
+                        ['client', t('internalAuditEvidenceClient')],
+                        ['verified', t('internalAuditEvidenceVerified')],
+                        ['unverified', t('internalAuditEvidenceUnverified')],
+                      ] as const).map(([value, label]) => {
+                        const selected = (data.evidence?.[control.id] ?? 'unverified') === value;
+                        return (
+                          <button
+                            type="button"
+                            key={value}
+                            onClick={() => updateEvidence(control.id, value)}
+                            className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${selected ? 'border-brand bg-brand-soft text-brand-strong' : 'border-line bg-surface text-ink-2 hover:border-brand'}`}
+                            aria-pressed={selected}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   <label className="mt-4 block">
