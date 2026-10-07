@@ -5,6 +5,7 @@ import { hasHebrew, heText } from './reportHe';
 import { demoDomainAudit, demoHttpHeaders } from './demoMode';
 import { scoreDomain } from './domainScore';
 import type { HttpHeadersData } from './httpHeadersScore';
+import { emptyInternalAudit } from './internalAudit';
 
 function findingIds(file: string): string[] {
   const src = readFileSync(new URL(file, import.meta.url), 'utf8');
@@ -26,7 +27,7 @@ describe('Hebrew report wording', () => {
 });
 
 describe('buildReport', () => {
-  const base = { clientName: 'Example Shop', auditor: 'Samuel', domain: 'example-shop.co.il', date: new Date('2026-10-07') };
+  const base = { clientName: 'Example Shop', auditor: 'Samuel', domain: 'example-shop.co.il', date: new Date('2026-10-07'), internalAudit: null };
 
   it('returns nothing before any check has run', () => {
     expect(buildReport({ ...base, domainAudit: null, httpHeaders: null })).toBeNull();
@@ -68,6 +69,23 @@ describe('buildReport', () => {
     expect(r.sections.map((s) => s.key)).toEqual(['email']);
     expect(r.overall!.score).toBe(r.sections[0].score.score);
     expect(r.problems.some((p) => p.finding.id === 'https-unreachable')).toBe(false);
+  });
+
+  it('adds the internal questionnaire as a third scored section', () => {
+    const internalAudit = emptyInternalAudit();
+    internalAudit.answers.mfa = 'no';
+    internalAudit.answers.backups = 'partial';
+    internalAudit.answers.edr = 'yes';
+
+    const r = buildReport({
+      ...base,
+      domainAudit: demoDomainAudit(base.domain),
+      httpHeaders: demoHttpHeaders(base.domain),
+      internalAudit,
+    })!;
+
+    expect(r.sections.map((s) => s.key)).toEqual(['email', 'web', 'internal']);
+    expect(r.problems.some((p) => p.section === 'internal')).toBe(true);
   });
 
   it('can produce an N/A report when only an unreachable website check exists', () => {
