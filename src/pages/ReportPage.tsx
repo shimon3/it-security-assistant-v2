@@ -6,6 +6,7 @@ import { apiPost, apiErrorOf, errorMessage } from '../utils/apiClient';
 import { updateSession, useAuditSession } from '../utils/auditSession';
 import type { DomainAuditData } from '../utils/domainScore';
 import { isHttpHeadersInconclusive, type HttpHeadersData } from '../utils/httpHeadersScore';
+import { hasAssessedInternalControls, isInternalAuditComplete } from '../utils/internalAudit';
 import { buildReport, formatDateHe, type Report, type ReportFinding } from '../utils/report';
 import { EFFORT_HE, OWNER_HE, SEVERITY_HE } from '../utils/reportHe';
 import { SEVERITY_STYLE } from '../utils/findingsStyle';
@@ -339,6 +340,33 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
             </ul>
           </div>
         )}
+      </section>
+
+      {/* Audit scope */}
+      <section className="py-6 border-b border-line break-inside-avoid">
+        <h2 className="text-lg font-bold mb-3">היקף הבדיקה</h2>
+        <div className="grid gap-2 sm:grid-cols-3">
+          <div className="rounded-lg border border-line bg-sunken px-4 py-3">
+            <p className="text-xs text-muted">אבטחת דואר</p>
+            <p className="font-semibold mt-1">{input.domainAudit ? 'הושלם ונכלל בציון' : 'לא בוצע'}</p>
+          </div>
+          <div className="rounded-lg border border-line bg-sunken px-4 py-3">
+            <p className="text-xs text-muted">אבטחת אתר</p>
+            <p className="font-semibold mt-1">
+              {!input.httpHeaders ? 'לא בוצע' : webInconclusive ? 'לא ניתן להשלים — לא נכלל בציון' : 'הושלם ונכלל בציון'}
+            </p>
+          </div>
+          <div className="rounded-lg border border-line bg-sunken px-4 py-3">
+            <p className="text-xs text-muted">בקרות פנימיות</p>
+            <p className="font-semibold mt-1">
+              {!hasAssessedInternalControls(input.internalAudit)
+                ? 'לא בוצע'
+                : isInternalAuditComplete(input.internalAudit)
+                  ? 'הושלם ונכלל בציון'
+                  : 'בתהליך — הממצאים מוצגים אך הציון לא נכלל'}
+            </p>
+          </div>
+        </div>
       </section>
 
       {/* Findings table */}
