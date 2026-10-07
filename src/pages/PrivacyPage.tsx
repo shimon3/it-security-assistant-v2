@@ -1,59 +1,128 @@
 import { FileLock2 } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
+import { useLanguage } from '../i18n';
 
 interface Row {
-  tool: string;
-  sentTo: string;
-  data: string;
-  kept: string;
+  tool: [string, string];
+  sentTo: [string, string];
+  data: [string, string];
+  kept: [string, string];
   audit: 'allowed' | 'hidden';
 }
 
-// Keep this table in sync with api/ and src/utils/. It doubles as the data annex of the client contract.
 const ROWS: Row[] = [
-  { tool: 'Email analysis', sentTo: 'Nowhere — runs in the browser', data: '—', kept: 'Last 5 analyses in this browser (personal mode only)', audit: 'allowed' },
-  { tool: 'Email analysis → link scan', sentTo: 'VirusTotal (via /api/vt-scan-urls)', data: 'Up to 5 suspicious links', kept: 'VirusTotal keeps submitted URLs', audit: 'hidden' },
-  { tool: 'Domain email security', sentTo: 'Cloudflare public DNS (via /api/domain-audit)', data: 'The domain name and its DNS sub-names (_dmarc, DKIM selectors…)', kept: 'Nothing on our side', audit: 'allowed' },
-  { tool: 'Website security headers', sentTo: 'The company website itself (via /api/http-headers), and Cloudflare public DNS', data: 'One page request to the home page; only response headers are read', kept: 'Nothing on our side', audit: 'allowed' },
-  { tool: 'Header analyzer', sentTo: 'Nowhere — runs in the browser', data: '—', kept: 'Nothing', audit: 'allowed' },
-  { tool: 'Password strength', sentTo: 'Nowhere — runs in the browser', data: '—', kept: 'Nothing', audit: 'allowed' },
-  { tool: 'Have I Been Pwned', sentTo: 'api.pwnedpasswords.com', data: 'First 5 characters of the password’s SHA-1 hash', kept: 'Nothing on our side', audit: 'allowed' },
-  { tool: 'Encoder / Decoder', sentTo: 'Nowhere — runs in the browser', data: '—', kept: 'Nothing', audit: 'allowed' },
-  { tool: 'QR code scanner', sentTo: 'Nowhere — camera and image stay in the browser', data: '—', kept: 'Nothing', audit: 'allowed' },
-  { tool: 'URL scanner, hash checker, IP lookup, domain WHOIS', sentTo: 'VirusTotal (via /api/vt-*)', data: 'The URL, hash, IP or domain typed', kept: 'VirusTotal keeps submitted URLs', audit: 'hidden' },
-  { tool: 'SSL/TLS checker', sentTo: 'Qualys SSL Labs (via /api/ssl-check)', data: 'The domain name', kept: 'SSL Labs may cache results', audit: 'hidden' },
+  {
+    tool: ['Email analysis', 'ניתוח אימייל'],
+    sentTo: ['Nowhere — runs in the browser', 'לשום מקום — פועל בדפדפן'],
+    data: ['—', '—'],
+    kept: ['Last 5 analyses in this browser (personal mode only)', '5 הניתוחים האחרונים בדפדפן (במצב אישי בלבד)'],
+    audit: 'allowed',
+  },
+  {
+    tool: ['Email analysis → link scan', 'ניתוח אימייל → סריקת קישורים'],
+    sentTo: ['VirusTotal (via /api/vt-scan-urls)', 'VirusTotal דרך /api/vt-scan-urls'],
+    data: ['Up to 5 suspicious links', 'עד 5 קישורים חשודים'],
+    kept: ['VirusTotal may retain submitted URLs', 'VirusTotal עשוי לשמור כתובות URL שנשלחו'],
+    audit: 'hidden',
+  },
+  {
+    tool: ['Domain email security', 'אבטחת דואר בדומיין'],
+    sentTo: ['Cloudflare public DNS (via /api/domain-audit)', 'DNS ציבורי של Cloudflare דרך /api/domain-audit'],
+    data: ['Domain name and DNS sub-names', 'שם הדומיין ותתי-שמות DNS'],
+    kept: ['Nothing on our side', 'לא נשמר אצלנו'],
+    audit: 'allowed',
+  },
+  {
+    tool: ['Website security headers', 'כותרות אבטחה באתר'],
+    sentTo: ['The company website and public DNS', 'אתר החברה ו-DNS ציבורי'],
+    data: ['One home-page request; response headers only', 'בקשה אחת לדף הבית; נקראות רק כותרות התגובה'],
+    kept: ['Nothing on our side', 'לא נשמר אצלנו'],
+    audit: 'allowed',
+  },
+  {
+    tool: ['Email header analyzer', 'ניתוח כותרות אימייל'],
+    sentTo: ['Nowhere — runs in the browser', 'לשום מקום — פועל בדפדפן'],
+    data: ['—', '—'],
+    kept: ['Nothing', 'לא נשמר'],
+    audit: 'allowed',
+  },
+  {
+    tool: ['Password strength', 'חוזק סיסמה'],
+    sentTo: ['Nowhere — runs in the browser', 'לשום מקום — פועל בדפדפן'],
+    data: ['—', '—'],
+    kept: ['Nothing', 'לא נשמר'],
+    audit: 'allowed',
+  },
+  {
+    tool: ['Have I Been Pwned password check', 'בדיקת סיסמה ב-Have I Been Pwned'],
+    sentTo: ['api.pwnedpasswords.com', 'api.pwnedpasswords.com'],
+    data: ['First 5 characters of the password SHA-1 hash', '5 התווים הראשונים של SHA-1 של הסיסמה'],
+    kept: ['Nothing on our side', 'לא נשמר אצלנו'],
+    audit: 'allowed',
+  },
+  {
+    tool: ['Encoder / decoder', 'מקודד / מפענח'],
+    sentTo: ['Nowhere — runs in the browser', 'לשום מקום — פועל בדפדפן'],
+    data: ['—', '—'],
+    kept: ['Nothing', 'לא נשמר'],
+    audit: 'allowed',
+  },
+  {
+    tool: ['QR scanner', 'סורק QR'],
+    sentTo: ['Nowhere — camera and image stay in the browser', 'לשום מקום — המצלמה והתמונה נשארות בדפדפן'],
+    data: ['—', '—'],
+    kept: ['Nothing', 'לא נשמר'],
+    audit: 'allowed',
+  },
+  {
+    tool: ['URL, hash, IP and WHOIS lookups', 'בדיקות URL, Hash, IP ו-WHOIS'],
+    sentTo: ['VirusTotal (via /api/vt-*)', 'VirusTotal דרך /api/vt-*'],
+    data: ['The value entered for lookup', 'הערך שהוזן לבדיקה'],
+    kept: ['Subject to VirusTotal policy', 'כפוף למדיניות VirusTotal'],
+    audit: 'hidden',
+  },
+  {
+    tool: ['SSL/TLS checker', 'בדיקת SSL/TLS'],
+    sentTo: ['Qualys SSL Labs (via /api/ssl-check)', 'Qualys SSL Labs דרך /api/ssl-check'],
+    data: ['Domain name', 'שם הדומיין'],
+    kept: ['SSL Labs may cache results', 'SSL Labs עשוי לשמור תוצאות במטמון'],
+    audit: 'hidden',
+  },
 ];
 
 export default function PrivacyPage() {
+  const { t, language } = useLanguage();
+  const i = language === 'he' ? 1 : 0;
+
   return (
     <div className="min-h-screen bg-canvas text-ink">
       <PageHeader
         icon={<FileLock2 className="w-5 h-5 text-brand" />}
-        title="Data & Privacy"
-        description="What each tool sends to third-party services, and what is kept"
+        title={t('privacyTitle')}
+        description={t('privacyDesc')}
       />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6 text-sm">
         <div className="overflow-x-auto rounded-xl border border-line">
-          <table className="w-full text-left">
+          <table className="w-full text-start">
             <thead className="bg-surface text-muted text-xs uppercase tracking-wide">
               <tr>
-                <th className="px-4 py-3 font-semibold">Tool</th>
-                <th className="px-4 py-3 font-semibold">Sent to</th>
-                <th className="px-4 py-3 font-semibold">Data sent</th>
-                <th className="px-4 py-3 font-semibold">Kept</th>
-                <th className="px-4 py-3 font-semibold">Audit mode</th>
+                <th className="px-4 py-3 font-semibold">{t('tool')}</th>
+                <th className="px-4 py-3 font-semibold">{t('sentTo')}</th>
+                <th className="px-4 py-3 font-semibold">{t('dataSent')}</th>
+                <th className="px-4 py-3 font-semibold">{t('kept')}</th>
+                <th className="px-4 py-3 font-semibold">{t('auditModeColumn')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line text-ink-2">
-              {ROWS.map((r) => (
-                <tr key={r.tool}>
-                  <td className="px-4 py-3 font-medium text-ink">{r.tool}</td>
-                  <td className="px-4 py-3">{r.sentTo}</td>
-                  <td className="px-4 py-3">{r.data}</td>
-                  <td className="px-4 py-3">{r.kept}</td>
-                  <td className={`px-4 py-3 ${r.audit === 'hidden' ? 'text-amber-700' : 'text-emerald-700'}`}>
-                    {r.audit === 'hidden' ? 'Hidden (non-commercial API)' : 'Available'}
+              {ROWS.map((row) => (
+                <tr key={row.tool[0]}>
+                  <td className="px-4 py-3 font-medium text-ink">{row.tool[i]}</td>
+                  <td className="px-4 py-3">{row.sentTo[i]}</td>
+                  <td className="px-4 py-3">{row.data[i]}</td>
+                  <td className="px-4 py-3">{row.kept[i]}</td>
+                  <td className={`px-4 py-3 ${row.audit === 'hidden' ? 'text-amber-700' : 'text-emerald-700'}`}>
+                    {row.audit === 'hidden' ? t('hiddenNonCommercial') : t('available')}
                   </td>
                 </tr>
               ))}
@@ -62,13 +131,10 @@ export default function PrivacyPage() {
         </div>
 
         <div className="space-y-2 text-muted">
-          <h2 className="text-base font-semibold text-ink">Server side</h2>
-          <p>The app has no database. The /api routes keep nothing once they answer.</p>
-          <p>
-            The hosting provider (Vercel) logs each request with its IP address. Rate-limit counters are keyed by IP
-            address and expire after one minute.
-          </p>
-          <p>The access token is kept in this browser tab only and is cleared when the tab closes.</p>
+          <h2 className="text-base font-semibold text-ink">{t('serverSide')}</h2>
+          <p>{t('noDatabase')}</p>
+          <p>{t('hostingLogs')}</p>
+          <p>{t('tokenStorage')}</p>
         </div>
       </div>
     </div>
