@@ -46,7 +46,7 @@ export default function HomePage({ onStart, onDemo }: HomePageProps) {
             <div className="flex flex-wrap items-center gap-3">
               <button onClick={onStart} className="inline-flex items-center gap-2 bg-brand hover:bg-brand-strong text-white font-semibold px-6 py-3.5 rounded-lg text-base transition-colors">
                 {t('openTools')}
-                <ArrowRight className={`w-4 h-4 ${dir === 'he' ? 'rotate-180' : ''}`} />
+                <ArrowRight className={`w-4 h-4 ${dir === 'rtl' ? 'rotate-180' : ''}`} />
               </button>
               <button onClick={onDemo} className="inline-flex items-center gap-2 border border-line-strong bg-surface hover:border-brand hover:text-brand-strong text-ink font-semibold px-6 py-3.5 rounded-lg text-base transition-colors">
                 <PlayCircle className="w-4 h-4" />
