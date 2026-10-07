@@ -1,6 +1,7 @@
 import { gradeFor, SEVERITY_ORDER, type Finding, type Score } from './findings';
 
 export type InternalAnswer = 'yes' | 'partial' | 'no' | 'unknown' | 'na';
+export type EvidenceStatus = 'client' | 'verified' | 'unverified';
 export type InternalControlId =
   | 'mfa'
   | 'backups'
@@ -27,6 +28,7 @@ export interface InternalControl {
 export interface InternalAuditData {
   answers: Record<InternalControlId, InternalAnswer>;
   observations: Record<InternalControlId, string>;
+  evidence: Record<InternalControlId, EvidenceStatus>;
   notes: string;
   completedAt: string | null;
 }
@@ -128,6 +130,7 @@ export function emptyInternalAudit(): InternalAuditData {
   return {
     answers: Object.fromEntries(INTERNAL_CONTROLS.map((c) => [c.id, 'unknown'])) as Record<InternalControlId, InternalAnswer>,
     observations: Object.fromEntries(INTERNAL_CONTROLS.map((c) => [c.id, ''])) as Record<InternalControlId, string>,
+    evidence: Object.fromEntries(INTERNAL_CONTROLS.map((c) => [c.id, 'unverified'])) as Record<InternalControlId, EvidenceStatus>,
     notes: '',
     completedAt: null,
   };
