@@ -30,6 +30,12 @@ export interface ReportSection {
   includedInOverall: boolean;
 }
 
+export interface RemediationPlan {
+  days7: ReportFinding[];
+  days30: ReportFinding[];
+  days90: ReportFinding[];
+}
+
 export interface Report {
   input: ReportInput;
   overall: { score: number; grade: Grade } | null;
@@ -41,8 +47,10 @@ export interface Report {
   good: ReportFinding[];
   /** Up to 3 most severe problems, for the summary. */
   topRisks: ReportFinding[];
-  /** Easy fixes with at least medium severity: "do this week". */
+  /** Easy fixes with at least medium severity: legacy summary used by older UI/tests. */
   thisWeek: ReportFinding[];
+  /** Every problem assigned once to a practical remediation horizon. */
+  remediationPlan: RemediationPlan;
 }
 
 const EFFORT_ORDER = ['easy', 'medium', 'hard'];
@@ -50,6 +58,38 @@ const EFFORT_ORDER = ['easy', 'medium', 'hard'];
 function byPriority(a: ReportFinding, b: ReportFinding): number {
   const s = SEVERITY_ORDER.indexOf(a.finding.severity) - SEVERITY_ORDER.indexOf(b.finding.severity);
   return s !== 0 ? s : EFFORT_ORDER.indexOf(a.he.effort) - EFFORT_ORDER.indexOf(b.he.effort);
+}
+
+export function buildRemediationPlan(problems: ReportFinding[]): RemediationPlan {
+  const days7: ReportFinding[] = [];
+  const days30: ReportFinding[] = [];
+  const days90: ReportFinding[] = [];
+
+  for (const item of problems) {
+    const { severity } = item.finding;
+    const { effort } = item.he;
+
+    if (
+      severity === 'critical'
+      || (severity === 'high' && effort !== 'hard')
+      || (severity === 'medium' && effort === 'easy')
+    ) {
+      days7.push(item);
+    } else if (
+      severity === 'high'
+      || (severity === 'medium' && effort !== 'hard')
+    ) {
+      days30.push(item);
+    } else {
+      days90.push(item);
+    }
+  }
+
+  return {
+    days7: days7.sort(byPriority),
+    days30: days30.sort(byPriority),
+    days90: days90.sort(byPriority),
+  };
 }
 
 export function buildReport(input: ReportInput): Report | null {
@@ -70,6 +110,8 @@ export function buildReport(input: ReportInput): Report | null {
   const problems = all.filter((r) => r.finding.severity !== 'ok').sort(byPriority);
   const good = all.filter((r) => r.finding.severity === 'ok');
 
+  const remediationPlan = buildRemediationPlan(problems);
+
   const scoredSections = sections.filter((s) => s.includedInOverall);
   const score = scoredSections.length > 0
     ? Math.round(scoredSections.reduce((sum, s) => sum + s.score.score, 0) / scoredSections.length)
@@ -83,9 +125,8 @@ export function buildReport(input: ReportInput): Report | null {
     problems,
     good,
     topRisks: problems.slice(0, 3),
-    thisWeek: problems
-      .filter((r) => r.he.effort === 'easy' && ['critical', 'high', 'medium'].includes(r.finding.severity))
-      .slice(0, 5),
+    thisWeek: remediationPlan.days7.slice(0, 5),
+    remediationPlan,
   };
 }
 
