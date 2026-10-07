@@ -38,7 +38,7 @@ function saveProfile(profile: ConsultantProfile): void {
   }
 }
 
-const SECTION_HE = { email: 'אבטחת הדואר האלקטרוני', web: 'אבטחת האתר' } as const;
+const SECTION_HE = { email: 'אבטחת הדואר האלקטרוני', web: 'אבטחת האתר', internal: 'בקרות אבטחה פנימיות' } as const;
 
 /** Hebrew text where "quoted" technical values are isolated left-to-right, so punctuation stays in place. */
 function He({ text }: { text: string }) {
@@ -70,12 +70,13 @@ export default function ReportPage() {
   const sameDomain = (d: { domain: string } | null) => !!d && d.domain === domain.trim().toLowerCase();
   const domainAudit = sameDomain(session.domainAudit) ? session.domainAudit : null;
   const httpHeaders = sameDomain(session.httpHeaders) ? session.httpHeaders : null;
+  const internalAudit = session.internalAudit;
   const missing = !domainAudit || !httpHeaders;
   const webInconclusive = httpHeaders ? isHttpHeadersInconclusive(httpHeaders) : false;
 
   const report = useMemo(
-    () => buildReport({ clientName, auditor: profile.name, domain, date: new Date(), domainAudit, httpHeaders }),
-    [clientName, profile.name, domain, domainAudit, httpHeaders],
+    () => buildReport({ clientName, auditor: profile.name, domain, date: new Date(), domainAudit, httpHeaders, internalAudit }),
+    [clientName, profile.name, domain, domainAudit, httpHeaders, internalAudit],
   );
 
   function updateProfile(patch: Partial<ConsultantProfile>) {
@@ -258,7 +259,7 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
             {profile.website && <p>{profile.website}</p>}
           </div>
           <p className="mt-8 text-xs text-muted">
-            בדיקה חיצונית המבוססת על מידע ציבורי בלבד. אין בדוח זה התחייבות לעמידה בתקן או בדרישה רגולטורית.
+            הדוח משלב בדיקות חיצוניות המבוססות על מידע ציבורי עם תשובות ותצפיות שנאספו במהלך הבדיקה. אין בדוח זה התחייבות לעמידה בתקן או בדרישה רגולטורית.
           </p>
         </div>
       </section>
@@ -396,6 +397,15 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
               <p>DNSSEC: {input.domainAudit.dnssec ? 'yes' : 'no'} · MTA-STS: {input.domainAudit.mtaSts ? 'yes' : 'no'} · TLS-RPT: {input.domainAudit.tlsRpt ? 'yes' : 'no'}</p>
             </div>
           )}
+          {input.internalAudit && (
+            <div className="break-inside-avoid">
+              <p className="font-sans font-semibold text-ink text-xs mb-1">Internal controls</p>
+              {Object.entries(input.internalAudit.answers).map(([key, value]) => (
+                <p key={key}>{key}: {value}</p>
+              ))}
+              {input.internalAudit.notes && <p className="whitespace-pre-wrap">Notes: {input.internalAudit.notes}</p>}
+            </div>
+          )}
           {input.httpHeaders && (
             <div className="break-inside-avoid">
               <p className="font-sans font-semibold text-ink text-xs mb-1">HTTP — {input.httpHeaders.https.finalUrl ?? input.httpHeaders.domain}</p>
@@ -409,7 +419,7 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
       </section>
 
       <footer className="mt-8 pt-4 border-t border-line text-xs text-muted">
-        הבדיקה נערכה מבחוץ, על סמך מידע ציבורי בלבד (DNS וכותרות האתר), בתאריך {formatDateHe(input.date)}. היא משקפת את המצב במועד הבדיקה ואינה מהווה אישור עמידה בדרישות חוק או תקן.
+        הבדיקה נערכה בתאריך {formatDateHe(input.date)} ומשלבת מידע ציבורי (DNS וכותרות האתר) עם תשובות ותצפיות שנאספו מהלקוח. היא משקפת את המצב במועד הבדיקה ואינה מהווה אישור עמידה בדרישות חוק או תקן.
       </footer>
     </article>
   );
