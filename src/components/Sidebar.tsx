@@ -41,7 +41,7 @@ export default function Sidebar({ activeTool, onSelect, isOpen = false, onClose,
     <aside
       className={[
         'fixed md:sticky md:top-0 inset-y-0 left-0 z-50',
-        'w-72 md:w-60 shrink-0 h-screen',
+        'w-72 md:w-64 shrink-0 h-screen',
         'bg-surface border-r border-line flex flex-col',
         'transition-transform duration-200 ease-in-out',
         isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
