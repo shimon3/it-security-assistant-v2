@@ -55,14 +55,9 @@ export async function checkUrl(url: string, apiKey: string): Promise<RouteResult
     const res = await fetch(`${VT_API_BASE}/urls/${urlId(url)}`, { headers: { 'x-apikey': apiKey } });
 
     if (res.status === 404) {
-      // Not known yet: submit it so a later lookup has a result.
-      const submit = await fetch(`${VT_API_BASE}/urls`, {
-        method: 'POST',
-        headers: { 'x-apikey': apiKey, 'content-type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ url }).toString(),
-      });
-      const message = submit.ok ? 'First scan submitted — retry later' : 'Not in VirusTotal yet';
-      return { httpStatus: 200, body: emptyUrl(url, 'unknown', message) };
+      // Do not auto-submit unknown URLs. A public-API lookup must stay cheap and predictable:
+      // one user action = at most one VirusTotal request per URL.
+      return { httpStatus: 200, body: emptyUrl(url, 'unknown', 'Not in VirusTotal database') };
     }
     if (res.status === 429) {
       return { httpStatus: 429, body: emptyUrl(url, 'error', 'VirusTotal rate limit reached (4 req/min on free tier)') };
