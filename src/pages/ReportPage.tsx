@@ -6,7 +6,7 @@ import { apiPost, apiErrorOf, errorMessage } from '../utils/apiClient';
 import { updateSession, useAuditSession } from '../utils/auditSession';
 import type { DomainAuditData } from '../utils/domainScore';
 import { isHttpHeadersInconclusive, type HttpHeadersData } from '../utils/httpHeadersScore';
-import { hasAssessedInternalControls, isInternalAuditComplete, type EvidenceStatus } from '../utils/internalAudit';
+import { hasAssessedInternalControls, internalScoreCaps, isInternalAuditComplete, type EvidenceStatus } from '../utils/internalAudit';
 import { emailPlatformLabelHe, hasClientEnvironment, presenceLabelHe } from '../utils/clientEnvironment';
 import { buildReport, formatDateHe, type Report, type ReportFinding } from '../utils/report';
 import { EFFORT_HE, OWNER_HE, SEVERITY_HE } from '../utils/reportHe';
@@ -240,6 +240,7 @@ function Problem({ r, evidence }: { r: ReportFinding; evidence?: EvidenceStatus 
 function ReportDocument({ report, profile }: { report: Report; profile: ConsultantProfile }) {
   const { input, overall, webInconclusive, sections, problems, good, topRisks, thisWeek } = report;
   const client = input.clientName.trim() || input.domain;
+  const internalCaps = input.internalAudit ? internalScoreCaps(input.internalAudit) : [];
 
   return (
     <article
@@ -319,6 +320,16 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
           <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 px-5 py-4 text-slate-800">
             <p className="font-semibold">שאלון האבטחה הפנימי עדיין בתהליך</p>
             <p className="mt-1 text-sm">הממצאים שכבר נבדקו מופיעים בדוח, אך הציון הפנימי אינו נכלל בציון הכולל עד שכל הבקרות נבדקו או סומנו כלא רלוונטיות.</p>
+          </div>
+        )}
+        {internalCaps.length > 0 && isInternalAuditComplete(input.internalAudit) && (
+          <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-amber-900">
+            <p className="font-semibold">הציון הפנימי הוגבל בגלל בקרה קריטית חסרה</p>
+            <ul className="mt-1 list-disc ps-5 text-sm space-y-1">
+              {internalCaps.map((cap) => (
+                <li key={cap.controlId}>{cap.reasonHe} ציון פנימי מרבי: {cap.maxScore}/100.</li>
+              ))}
+            </ul>
           </div>
         )}
         {webInconclusive && (
