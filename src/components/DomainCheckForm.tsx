@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Search, Loader2 } from 'lucide-react';
+import { useLanguage } from '../i18n';
 
 interface DomainCheckFormProps {
   id: string;
@@ -11,15 +12,15 @@ interface DomainCheckFormProps {
   onSubmit: (domain: string) => void;
 }
 
-/** Domain field + action button shared by the audit pages. */
 export default function DomainCheckForm({ id, initialValue, loading, error, hint, buttonLabel, onSubmit }: DomainCheckFormProps) {
   const [value, setValue] = useState(initialValue);
   const [localError, setLocalError] = useState('');
+  const { t } = useLanguage();
   const shownError = localError || error;
 
   function submit() {
     if (!value.trim()) {
-      setLocalError('Enter a domain, for example company.co.il.');
+      setLocalError(t('domainRequired'));
       return;
     }
     setLocalError('');
@@ -28,18 +29,19 @@ export default function DomainCheckForm({ id, initialValue, loading, error, hint
 
   return (
     <div className="space-y-2">
-      <label htmlFor={id} className="text-sm font-medium text-ink-2">Domain</label>
+      <label htmlFor={id} className="text-sm font-medium text-ink-2">{t('domain')}</label>
       <div className="flex gap-3">
         <input
           id={id}
           type="text"
+          dir="ltr"
           inputMode="url"
           autoComplete="off"
           spellCheck={false}
           value={value}
           onChange={(e) => { setValue(e.target.value); if (localError) setLocalError(''); }}
           onKeyDown={(e) => e.key === 'Enter' && submit()}
-          placeholder="company.co.il"
+          placeholder={t('domainPlaceholder')}
           aria-invalid={!!shownError}
           aria-describedby={`${id}-hint`}
           className="flex-1 min-w-0 bg-surface border border-line rounded-xl px-4 py-3 text-ink placeholder-faint focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-colors text-sm"
