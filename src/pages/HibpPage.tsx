@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ShieldAlert, Eye, EyeOff, Loader2 } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
+import { checkPwnedPassword } from '../utils/pwnedPasswords';
 
 interface HibpResult {
   pwned: boolean;
@@ -27,16 +28,11 @@ export default function HibpPage() {
     setPwLoading(true);
 
     try {
-      const res = await fetch('/api/hibp-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
-      });
-      if (!res.ok) throw new Error('Network response was not ok');
-      const data: HibpResult = await res.json();
-      setPwResult(data);
-    } catch {
-      setPwError('Check failed — verify your connection and try again.');
+      setPwResult(await checkPwnedPassword(password));
+    } catch (err) {
+      setPwError(err instanceof Error && err.message.startsWith('Service busy')
+        ? err.message
+        : 'Check failed — verify your connection and try again.');
     } finally {
       setPwLoading(false);
     }

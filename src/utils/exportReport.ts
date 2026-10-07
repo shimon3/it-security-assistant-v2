@@ -2,7 +2,40 @@ import { AnalysisResult } from './emailAnalyzer';
 import { HeaderAnalysisResult } from './headerAnalyzer';
 import { VTUrlResult } from './virusTotalApi';
 
+export interface ReportOptions {
+  /** Mask email addresses and strip URL paths/queries (client reports). */
+  anonymize?: boolean;
+}
+
+/** "paul.levy@client.co.il" -> "p***@client.co.il" */
+export function maskEmail(email: string): string {
+  return email.replace(/([A-Za-z0-9._%+-])[A-Za-z0-9._%+-]*@([A-Za-z0-9.-]+\.[A-Za-z]{2,})/g, '$1***@$2');
+}
+
+/** Keeps scheme + host only: "https://evil.example/login?u=paul" -> "https://evil.example/…" */
+export function maskUrl(url: string): string {
+  const m = /^([a-z][a-z0-9+.-]*:\/\/[^/?#\s]+)(.*)$/i.exec(url.trim());
+  if (!m) return maskEmail(url);
+  return m[2] && m[2] !== '/' ? `${m[1]}/…` : m[1];
+}
+
+/** Masks emails, then URLs, inside free text. */
+export function anonymizeText(text: string): string {
+  return maskEmail(text).replace(/https?:\/\/[^\s"'<>)]+/gi, (u) => maskUrl(u));
+}
+
 export function generateTextReport(
+  senderEmail: string,
+  result: AnalysisResult,
+  headerResult: HeaderAnalysisResult | null,
+  vtResults: VTUrlResult[] | null,
+  options: ReportOptions = {}
+): string {
+  const text = buildReport(senderEmail, result, headerResult, vtResults);
+  return options.anonymize ? anonymizeText(text) : text;
+}
+
+function buildReport(
   senderEmail: string,
   result: AnalysisResult,
   headerResult: HeaderAnalysisResult | null,
@@ -80,8 +113,9 @@ export async function copyReportToClipboard(
   senderEmail: string,
   result: AnalysisResult,
   headerResult: HeaderAnalysisResult | null,
-  vtResults: VTUrlResult[] | null
+  vtResults: VTUrlResult[] | null,
+  options: ReportOptions = {}
 ): Promise<void> {
-  const text = generateTextReport(senderEmail, result, headerResult, vtResults);
+  const text = generateTextReport(senderEmail, result, headerResult, vtResults, options);
   await navigator.clipboard.writeText(text);
 }

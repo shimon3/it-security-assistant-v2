@@ -17,6 +17,7 @@ import { scanUrlsWithVT, VTUrlResult } from '../utils/virusTotalApi';
 import { copyReportToClipboard } from '../utils/exportReport';
 import RiskResults from '../components/RiskResults';
 import HistoryPanel, { HistoryEntry } from '../components/HistoryPanel';
+import { useAuditMode } from '../utils/auditMode';
 
 interface AnalysisPageProps {
   onBack: () => void;
@@ -56,6 +57,8 @@ export default function AnalysisPage({ onBack }: AnalysisPageProps) {
   const [error, setError] = useState('');
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [auditMode] = useAuditMode();
+  const [anonymize, setAnonymize] = useState(true);
 
   useEffect(() => {
     setHistory(loadHistory());
@@ -88,11 +91,15 @@ export default function AnalysisPage({ onBack }: AnalysisPageProps) {
       result: analysis,
       analyzedAt: Date.now(),
     };
-    const updated = [newEntry, ...history].slice(0, MAX_HISTORY);
-    setHistory(updated);
-    saveHistory(updated);
+    // Client emails are never written to browser storage in audit mode.
+    if (!auditMode) {
+      const updated = [newEntry, ...history].slice(0, MAX_HISTORY);
+      setHistory(updated);
+      saveHistory(updated);
+    }
 
-    const urlsToScan = analysis.suspiciousUrls.map((u) => u.url);
+    // VirusTotal's public API forbids commercial use: no URL scan in audit mode.
+    const urlsToScan = auditMode ? [] : analysis.suspiciousUrls.map((u) => u.url);
     if (urlsToScan.length > 0) {
       setVtLoading(true);
       scanUrlsWithVT(urlsToScan)
@@ -126,12 +133,16 @@ export default function AnalysisPage({ onBack }: AnalysisPageProps) {
 
   function handleClearHistory() {
     setHistory([]);
-    localStorage.removeItem(HISTORY_KEY);
+    try {
+      localStorage.removeItem(HISTORY_KEY);
+    } catch {
+      // storage unavailable: nothing was saved
+    }
   }
 
   async function handleCopyReport() {
     if (!result) return;
-    await copyReportToClipboard(senderEmail, result, headerResult, vtResults);
+    await copyReportToClipboard(senderEmail, result, headerResult, vtResults, { anonymize: auditMode && anonymize });
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -147,7 +158,7 @@ export default function AnalysisPage({ onBack }: AnalysisPageProps) {
           Back
         </button>
 
-        {history.length > 0 && (
+        {!auditMode && history.length > 0 && (
           <button
             onClick={() => setShowHistory(!showHistory)}
             className="ml-auto flex items-center gap-2 text-sm text-slate-400 hover:text-white border border-slate-800 hover:border-slate-600 px-3 py-1.5 rounded-lg transition-all"
@@ -166,7 +177,20 @@ export default function AnalysisPage({ onBack }: AnalysisPageProps) {
 
       <main className="flex-1 px-4 sm:px-6 py-6 sm:py-10">
         <div className="max-w-2xl mx-auto space-y-8">
-          {showHistory && (
+          {auditMode && (
+            <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-200 space-y-2">
+              <p>Audit mode: analyses are not saved in this browser and links are not sent to VirusTotal.</p>
+              {history.length > 0 && (
+                <button
+                  onClick={handleClearHistory}
+                  className="text-xs font-medium text-amber-300 underline underline-offset-2 hover:text-amber-100"
+                >
+                  Delete the {history.length} saved analyses from earlier sessions
+                </button>
+              )}
+            </div>
+          )}
+          {!auditMode && showHistory && (
             <HistoryPanel
               history={history}
               onLoad={handleLoadFromHistory}
@@ -278,6 +302,13 @@ export default function AnalysisPage({ onBack }: AnalysisPageProps) {
             <div className="border-t border-slate-800 pt-8 space-y-5">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-white">Analysis Results</h3>
+                <div className="flex items-center gap-3">
+                {auditMode && (
+                  <label className="flex items-center gap-1.5 text-xs text-slate-400">
+                    <input type="checkbox" className="accent-amber-400" checked={anonymize} onChange={(e) => setAnonymize(e.target.checked)} />
+                    Anonymise
+                  </label>
+                )}
                 <button
                   onClick={handleCopyReport}
                   className="flex items-center gap-2 text-sm text-slate-400 hover:text-white border border-slate-800 hover:border-slate-600 px-3 py-1.5 rounded-lg transition-all"
@@ -291,6 +322,7 @@ export default function AnalysisPage({ onBack }: AnalysisPageProps) {
                     </>
                   )}
                 </button>
+                </div>
               </div>
               <RiskResults
                 result={result}

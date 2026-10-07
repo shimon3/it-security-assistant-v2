@@ -22,7 +22,7 @@ function extractAllHeaders(headers: string, name: string): string[] {
 }
 
 function extractEmail(str: string): string | null {
-  return str.match(/[\w.+\-]+@[\w.\-]+/)?.[0]?.toLowerCase() ?? null;
+  return str.match(/[\w.+-]+@[\w.-]+/)?.[0]?.toLowerCase() ?? null;
 }
 
 function extractDomain(email: string): string {
@@ -97,7 +97,7 @@ export function analyzeHeaders(raw: string): HeaderAnalysisResult {
   if (messageId && from) {
     const fromEmail = extractEmail(from);
     const fromDomain = fromEmail ? extractDomain(fromEmail) : null;
-    const msgIdDomain = messageId.match(/@([\w.\-]+)/)?.[1]?.toLowerCase();
+    const msgIdDomain = messageId.match(/@([\w.-]+)/)?.[1]?.toLowerCase();
     if (fromDomain && msgIdDomain && !msgIdDomain.endsWith(fromDomain) && !fromDomain.endsWith(msgIdDomain)) {
       add({ header: 'Message-ID', value: messageId, reason: `Message-ID domain (${msgIdDomain}) does not match sender domain (${fromDomain})`, severity: 15 });
     }

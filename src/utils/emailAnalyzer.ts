@@ -250,27 +250,27 @@ const SUSPICIOUS_FOREIGN_DOMAINS = [
 
 const SUSPICIOUS_PHONE_PATTERNS = [
   {
-    pattern: /\+9[0-9]{2}[\s\-]?[0-9]{6,}/,
+    pattern: /\+9[0-9]{2}[\s-]?[0-9]{6,}/,
     reason: 'Premium rate international number (+9xx)',
     severity: 25,
   },
   {
-    pattern: /\+7[\s\-]?[0-9]{10}/,
+    pattern: /\+7[\s-]?[0-9]{10}/,
     reason: 'Russian phone number',
     severity: 20,
   },
   {
-    pattern: /\+234[\s\-]?[0-9]{7,}/,
+    pattern: /\+234[\s-]?[0-9]{7,}/,
     reason: 'Nigerian phone number — high fraud risk',
     severity: 30,
   },
   {
-    pattern: /\+233[\s\-]?[0-9]{7,}/,
+    pattern: /\+233[\s-]?[0-9]{7,}/,
     reason: 'Ghanaian phone number — commonly used in fraud',
     severity: 25,
   },
   {
-    pattern: /\+225[\s\-]?[0-9]{7,}/,
+    pattern: /\+225[\s-]?[0-9]{7,}/,
     reason: 'Ivory Coast number — commonly used in fraud',
     severity: 25,
   },
@@ -298,12 +298,12 @@ const SUSPICIOUS_PHONE_PATTERNS = [
 
 const ISRAELI_SUSPICIOUS_PHONE = [
   {
-    pattern: /1[\s\-]?900[\s\-]?[0-9]{6}/,
+    pattern: /1[\s-]?900[\s-]?[0-9]{6}/,
     reason: 'Israeli premium rate number (1-900)',
     severity: 30,
   },
   {
-    pattern: /1[\s\-]?800[\s\-]?[0-9]{6}/,
+    pattern: /1[\s-]?800[\s-]?[0-9]{6}/,
     reason: 'Israeli toll-free number — verify legitimacy',
     severity: 10,
   },
@@ -414,9 +414,9 @@ const HEBREW_BANK_PHRASES = [
 ];
 
 function extractUrls(content: string): string[] {
-  const urlRegex = /https?:\/\/[^\s<>"\)]+/gi;
+  const urlRegex = /https?:\/\/[^\s<>")]+/gi;
   const matches = content.match(urlRegex) || [];
-  return [...new Set(matches.map((url) => url.replace(/[.,;!?\)]*$/, '')))];
+  return [...new Set(matches.map((url) => url.replace(/[.,;!?)]*$/, '')))];
 }
 
 function detectSuspiciousUrls(urls: string[]): URLDetection[] {
@@ -576,7 +576,7 @@ function detectSuspiciousPhones(
     }
   });
 
-  const phoneRegex = /(\+?[\d][\s\-]?){7,15}/g;
+  const phoneRegex = /(\+?[\d][\s-]?){7,15}/g;
   const allPhones = content.match(phoneRegex) || [];
   const uniquePhones = [...new Set(allPhones.map((p) => p.trim()))].filter(
     (p) => p.length > 6

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Globe, Search, Loader2 } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
+import { apiPost, apiErrorOf, errorMessage } from '../utils/apiClient';
 import { VTVerdictCard, VTEngineBreakdown } from '../components/VTVerdict';
 
 interface IpResult {
@@ -31,16 +32,11 @@ export default function IpLookupPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/vt-ip', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ip: trimmed }),
-      });
-      if (!res.ok) throw new Error('Network response was not ok');
-      const data: IpResult = await res.json();
-      setResult(data);
-    } catch {
-      setError('Lookup failed — check your connection and try again.');
+      const res = await apiPost<IpResult>('/api/vt-ip', { ip: trimmed });
+      if (res.data && 'status' in res.data) setResult(res.data);
+      else setError(apiErrorOf(res) ?? 'Lookup failed — check your connection and try again.');
+    } catch (err) {
+      setError(errorMessage(err, 'Lookup failed — check your connection and try again.'));
     } finally {
       setLoading(false);
     }

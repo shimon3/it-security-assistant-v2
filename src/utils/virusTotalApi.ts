@@ -1,3 +1,5 @@
+import { apiPost, apiErrorOf, errorMessage } from './apiClient';
+
 export interface VTUrlResult {
   url: string;
   malicious: number;
@@ -23,43 +25,41 @@ export interface VTFileResult {
   errorMessage?: string;
 }
 
+const urlError = (url: string, errorMessage: string): VTUrlResult => ({
+  url, malicious: 0, suspicious: 0, harmless: 0, undetected: 0, total: 0, status: 'error', errorMessage,
+});
+
 export async function checkUrlWithVT(url: string): Promise<VTUrlResult> {
   try {
-    const res = await fetch('/api/vt-url', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url }),
-    });
-    return await res.json() as VTUrlResult;
-  } catch {
-    return { url, malicious: 0, suspicious: 0, harmless: 0, undetected: 0, total: 0, status: 'error', errorMessage: 'Network error' };
+    const res = await apiPost<VTUrlResult>('/api/vt-url', { url });
+    if (res.data && 'status' in res.data) return res.data;
+    return urlError(url, apiErrorOf(res) ?? `Request failed (${res.status})`);
+  } catch (err) {
+    return urlError(url, errorMessage(err, 'Network error'));
   }
 }
 
 export async function checkHashWithVT(hash: string): Promise<VTFileResult> {
+  const fail = (msg: string): VTFileResult => ({
+    hash, fileName: null, fileType: null, malicious: 0, suspicious: 0, harmless: 0, undetected: 0, total: 0,
+    status: 'error', threatNames: [], errorMessage: msg,
+  });
   try {
-    const res = await fetch('/api/vt-hash', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ hash }),
-    });
-    return await res.json() as VTFileResult;
-  } catch {
-    return { hash, fileName: null, fileType: null, malicious: 0, suspicious: 0, harmless: 0, undetected: 0, total: 0, status: 'error', threatNames: [], errorMessage: 'Network error' };
+    const res = await apiPost<VTFileResult>('/api/vt-hash', { hash });
+    if (res.data && 'status' in res.data) return res.data;
+    return fail(apiErrorOf(res) ?? `Request failed (${res.status})`);
+  } catch (err) {
+    return fail(errorMessage(err, 'Network error'));
   }
 }
 
 export async function scanUrlsWithVT(urls: string[]): Promise<VTUrlResult[]> {
   try {
-    const res = await fetch('/api/vt-scan-urls', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ urls }),
-    });
-    return await res.json() as VTUrlResult[];
-  } catch {
-    return urls.map((url) => ({
-      url, malicious: 0, suspicious: 0, harmless: 0, undetected: 0, total: 0, status: 'error' as const, errorMessage: 'Network error',
-    }));
+    const res = await apiPost<VTUrlResult[]>('/api/vt-scan-urls', { urls });
+    if (Array.isArray(res.data)) return res.data;
+    const msg = apiErrorOf(res) ?? `Request failed (${res.status})`;
+    return urls.map((url) => urlError(url, msg));
+  } catch (err) {
+    return urls.map((url) => urlError(url, errorMessage(err, 'Network error')));
   }
 }
