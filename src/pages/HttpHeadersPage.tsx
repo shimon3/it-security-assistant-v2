@@ -5,7 +5,7 @@ import DomainCheckForm from '../components/DomainCheckForm';
 import { FindingList, GradeCard } from '../components/AuditResult';
 import { findingsText } from '../utils/findingsStyle';
 import { apiPost, apiErrorOf, errorMessage } from '../utils/apiClient';
-import { scoreHttpHeaders, type HttpHeadersData } from '../utils/httpHeadersScore';
+import { isHttpHeadersInconclusive, scoreHttpHeaders, type HttpHeadersData } from '../utils/httpHeadersScore';
 import { updateSession, useAuditSession } from '../utils/auditSession';
 import { useLanguage } from '../i18n';
 
@@ -17,7 +17,8 @@ export default function HttpHeadersPage() {
   const { t } = useLanguage();
 
   const data = session.httpHeaders;
-  const score = data ? scoreHttpHeaders(data) : null;
+  const inconclusive = data ? isHttpHeadersInconclusive(data) : false;
+  const score = data && !inconclusive ? scoreHttpHeaders(data) : null;
 
   async function handleCheck(domain: string) {
     setError('');
@@ -55,7 +56,25 @@ export default function HttpHeadersPage() {
           onSubmit={handleCheck}
         />
 
-        {data && score && (
+        {data && (
+          <div className="space-y-4 animate-fade-in">
+            {inconclusive ? (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 space-y-2">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="font-semibold text-amber-800">{t('websiteUnreachable')}</p>
+                    <p className="text-sm text-amber-800/80 mt-1">{t('websiteUnreachableDesc')}</p>
+                  </div>
+                  <div className="shrink-0 rounded-xl border-2 border-amber-300 bg-white px-4 py-2 text-xl font-bold text-amber-800">{t('notApplicable')}</div>
+                </div>
+                <div className="text-sm text-amber-900 space-y-1 pt-1">
+                  <p>{t('httpsInconclusive')}</p>
+                  <p>{t('headersNotEvaluated')}</p>
+                </div>
+              </div>
+            ) : score ? (
+              <>
+            <GradeCard
           <div className="space-y-4 animate-fade-in">
             <GradeCard
               subject={data.https.finalUrl ?? data.domain}
@@ -66,6 +85,8 @@ export default function HttpHeadersPage() {
               ])}
             />
             <FindingList findings={score.findings} />
+              </>
+            ) : null}
 
             <div className="rounded-xl border border-line bg-surface">
               <button
