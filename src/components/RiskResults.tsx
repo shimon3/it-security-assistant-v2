@@ -72,7 +72,7 @@ export default function RiskResults({ result, headerResult, vtResults, vtLoading
       <div className="bg-surface border border-line rounded-xl p-5 space-y-3">
         <div className="flex items-center gap-2 text-ink-2 font-semibold text-sm">
           <ShieldCheck className="w-4 h-4 text-muted" />
-          Detected Issues
+          {t('detectedIssues')}
         </div>
         <ul className="space-y-2">
           {result.issues.map((issue, i) => (
@@ -93,7 +93,7 @@ export default function RiskResults({ result, headerResult, vtResults, vtLoading
         <div className="bg-surface border border-line rounded-xl p-5 space-y-3">
           <div className="flex items-center gap-2 text-ink-2 font-semibold text-sm">
             <Paperclip className="w-4 h-4 text-red-700" />
-            Suspicious Attachments
+            {t('suspiciousAttachments')}
           </div>
           <ul className="space-y-3">
             {result.suspiciousAttachments.map((att, i) => (
@@ -116,7 +116,7 @@ export default function RiskResults({ result, headerResult, vtResults, vtLoading
         <div className="bg-surface border border-line rounded-xl p-5 space-y-3">
           <div className="flex items-center gap-2 text-ink-2 font-semibold text-sm">
             <Link2 className="w-4 h-4 text-orange-700" />
-            Suspicious URLs
+            {t('suspiciousUrls')}
           </div>
           <ul className="space-y-3">
             {result.suspiciousUrls.map((urlDetection, i) => (
@@ -140,7 +140,7 @@ export default function RiskResults({ result, headerResult, vtResults, vtLoading
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-ink-2 font-semibold text-sm">
               <Code2 className="w-4 h-4 text-indigo-700" />
-              Header Analysis
+              {t('headerAnalysis')}
             </div>
             <span className={`text-xs font-bold px-2 py-1 rounded-lg border ${
               headerResult.score >= 40
@@ -247,7 +247,7 @@ export default function RiskResults({ result, headerResult, vtResults, vtLoading
       <div className="bg-surface border border-line rounded-xl p-5 space-y-3">
         <div className="flex items-center gap-2 text-ink-2 font-semibold text-sm">
           <AlertCircle className="w-4 h-4 text-muted" />
-          Explanation
+          {t('explanation')}
         </div>
         <p className="text-muted text-sm leading-relaxed">{result.explanation}</p>
       </div>
@@ -256,7 +256,7 @@ export default function RiskResults({ result, headerResult, vtResults, vtLoading
       <div className="bg-surface border border-line rounded-xl p-5 space-y-3">
         <div className="flex items-center gap-2 text-ink-2 font-semibold text-sm">
           <Lightbulb className="w-4 h-4 text-brand" />
-          Recommendations
+          {t('recommendations')}
         </div>
         <ul className="space-y-2">
           {result.recommendations.map((rec, i) => (
