@@ -216,6 +216,9 @@ function Problem({ r }: { r: ReportFinding }) {
       <td className="py-2.5 pe-3">
         <p className="font-semibold text-ink"><He text={r.he.title} /></p>
         <p className="text-ink-2 mt-0.5"><He text={r.he.impact} /></p>
+        {r.section === 'internal' && r.finding.detail && (
+          <p className="text-xs text-muted mt-1.5">תצפית: <bdi>{r.finding.detail}</bdi></p>
+        )}
       </td>
       <td className="py-2.5 text-ink-2 whitespace-nowrap">{EFFORT_HE[r.he.effort].split(' — ')[0]}</td>
     </tr>
@@ -400,9 +403,15 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
           {input.internalAudit && (
             <div className="break-inside-avoid">
               <p className="font-sans font-semibold text-ink text-xs mb-1">Internal controls</p>
-              {Object.entries(input.internalAudit.answers).map(([key, value]) => (
-                <p key={key}>{key}: {value}</p>
-              ))}
+              {Object.entries(input.internalAudit.answers).map(([key, value]) => {
+                const observation = input.internalAudit?.observations?.[key as keyof typeof input.internalAudit.observations] ?? '';
+                return (
+                  <div key={key}>
+                    <p>{key}: {value}</p>
+                    {observation && <p className="whitespace-pre-wrap">  observation: {observation}</p>}
+                  </div>
+                );
+              })}
               {input.internalAudit.notes && <p className="whitespace-pre-wrap">Notes: {input.internalAudit.notes}</p>}
             </div>
           )}
