@@ -6,7 +6,7 @@ import { apiPost, apiErrorOf, errorMessage } from '../utils/apiClient';
 import { updateSession, useAuditSession } from '../utils/auditSession';
 import type { DomainAuditData } from '../utils/domainScore';
 import { isHttpHeadersInconclusive, type HttpHeadersData } from '../utils/httpHeadersScore';
-import { hasAssessedInternalControls, isInternalAuditComplete } from '../utils/internalAudit';
+import { hasAssessedInternalControls, isInternalAuditComplete, type EvidenceStatus } from '../utils/internalAudit';
 import { emailPlatformLabelHe, hasClientEnvironment, presenceLabelHe } from '../utils/clientEnvironment';
 import { buildReport, formatDateHe, type Report, type ReportFinding } from '../utils/report';
 import { EFFORT_HE, OWNER_HE, SEVERITY_HE } from '../utils/reportHe';
@@ -208,7 +208,13 @@ export default function ReportPage() {
   );
 }
 
-function Problem({ r }: { r: ReportFinding }) {
+function evidenceLabelHe(value: EvidenceStatus | undefined): string {
+  if (value === 'verified') return 'אומת על ידי היועץ';
+  if (value === 'client') return 'הוצהר על ידי הלקוח';
+  return 'לא אומת';
+}
+
+function Problem({ r, evidence }: { r: ReportFinding; evidence?: EvidenceStatus }) {
   return (
     <tr className="align-top border-t border-line break-inside-avoid">
       <td className="py-2.5 pe-3">
@@ -219,8 +225,11 @@ function Problem({ r }: { r: ReportFinding }) {
       <td className="py-2.5 pe-3">
         <p className="font-semibold text-ink"><He text={r.he.title} /></p>
         <p className="text-ink-2 mt-0.5"><He text={r.he.impact} /></p>
+        {r.section === 'internal' && (
+          <p className="text-xs text-muted mt-1.5">מקור: {evidenceLabelHe(evidence)}</p>
+        )}
         {r.section === 'internal' && r.finding.detail && (
-          <p className="text-xs text-muted mt-1.5">תצפית: <bdi>{r.finding.detail}</bdi></p>
+          <p className="text-xs text-muted mt-1">תצפית: <bdi>{r.finding.detail}</bdi></p>
         )}
       </td>
       <td className="py-2.5 text-ink-2 whitespace-nowrap">{EFFORT_HE[r.he.effort].split(' — ')[0]}</td>
@@ -414,7 +423,7 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
               </tr>
             </thead>
             <tbody>
-              {problems.map((r) => <Problem key={r.finding.id} r={r} />)}
+              {problems.map((r) => <Problem key={r.finding.id} r={r} evidence={r.section === 'internal' ? input.internalAudit?.evidence?.[r.finding.id.replace(/^internal-/, '').replace(/-(ok|yes|partial|no)$/, '') as keyof NonNullable<typeof input.internalAudit>['evidence']] : undefined} />)}
             </tbody>
           </table>
         </section>
@@ -492,6 +501,7 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
                 return (
                   <div key={key}>
                     <p>{key}: {value}</p>
+                    <p>  evidence: {input.internalAudit?.evidence?.[key as keyof typeof input.internalAudit.evidence] ?? 'unverified'}</p>
                     {observation && <p className="whitespace-pre-wrap">  observation: {observation}</p>}
                   </div>
                 );
