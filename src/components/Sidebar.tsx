@@ -1,7 +1,7 @@
-import { Mail, Globe, Hash, Lock, Shield, Search, ShieldAlert, Code2, X, Home, ShieldCheck, MailSearch, QrCode, Briefcase, FileLock2 } from 'lucide-react';
+import { Mail, Globe, Hash, Lock, Shield, Search, ShieldAlert, Code2, X, Home, ShieldCheck, MailSearch, QrCode, Briefcase, FileLock2, MailCheck } from 'lucide-react';
 import { isPersonalOnly, useAuditMode } from '../utils/auditMode';
 
-export type Tool = 'email' | 'url' | 'hash' | 'password' | 'ip' | 'domain' | 'hibp' | 'encoder' | 'ssl' | 'headers' | 'qr' | 'privacy';
+export type Tool = 'email' | 'url' | 'hash' | 'password' | 'ip' | 'domain' | 'hibp' | 'encoder' | 'ssl' | 'headers' | 'qr' | 'privacy' | 'domainaudit';
 
 interface SidebarProps {
   activeTool: Tool;
@@ -13,6 +13,7 @@ interface SidebarProps {
 
 const tools: { id: Tool; label: string; icon: React.ElementType; desc: string; isNew?: boolean }[] = [
   { id: 'email',    label: 'Email Analysis',      icon: Mail,        desc: 'Phishing detection'       },
+  { id: 'domainaudit', label: 'Domain Email Security', icon: MailCheck, desc: 'SPF / DMARC / DKIM grade', isNew: true },
   { id: 'url',      label: 'URL Scanner',          icon: Globe,       desc: 'URL reputation'           },
   { id: 'hash',     label: 'Hash Checker',         icon: Hash,        desc: 'File threat lookup'       },
   { id: 'password', label: 'Password Strength',    icon: Lock,        desc: 'Security evaluator'       },
