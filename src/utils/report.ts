@@ -4,6 +4,7 @@ import { gradeFor, SEVERITY_ORDER, type Finding, type Grade, type Score } from '
 import { scoreDomain, type DomainAuditData } from './domainScore';
 import { isHttpHeadersInconclusive, scoreHttpHeaders, type HttpHeadersData } from './httpHeadersScore';
 import { heText, type HeText } from './reportHe';
+import { hasAssessedInternalControls, scoreInternalAudit, type InternalAuditData } from './internalAudit';
 
 export interface ReportInput {
   clientName: string;
@@ -12,16 +13,17 @@ export interface ReportInput {
   date: Date;
   domainAudit: DomainAuditData | null;
   httpHeaders: HttpHeadersData | null;
+  internalAudit: InternalAuditData | null;
 }
 
 export interface ReportFinding {
   finding: Finding;
   he: HeText;
-  section: 'email' | 'web';
+  section: 'email' | 'web' | 'internal';
 }
 
 export interface ReportSection {
-  key: 'email' | 'web';
+  key: 'email' | 'web' | 'internal';
   score: Score;
 }
 
@@ -52,7 +54,8 @@ export function buildReport(input: ReportInput): Report | null {
   const webInconclusive = !!input.httpHeaders && isHttpHeadersInconclusive(input.httpHeaders);
   if (input.domainAudit) sections.push({ key: 'email', score: scoreDomain(input.domainAudit) });
   if (input.httpHeaders && !webInconclusive) sections.push({ key: 'web', score: scoreHttpHeaders(input.httpHeaders) });
-  if (!input.domainAudit && !input.httpHeaders) return null;
+  if (input.internalAudit && hasAssessedInternalControls(input.internalAudit)) sections.push({ key: 'internal', score: scoreInternalAudit(input.internalAudit) });
+  if (!input.domainAudit && !input.httpHeaders && !hasAssessedInternalControls(input.internalAudit)) return null;
 
   const all: ReportFinding[] = sections.flatMap((s) => s.score.findings.map((finding) => ({ finding, he: heText(finding), section: s.key })));
   const problems = all.filter((r) => r.finding.severity !== 'ok').sort(byPriority);
