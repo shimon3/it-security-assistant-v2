@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Code2, Copy, Check } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
+import { useLanguage } from '../i18n';
 
 // ---- Utilities ----
 
@@ -73,6 +74,7 @@ function EncoderSection({
   decodeLabel,
 }: SectionProps) {
   const [copied, setCopied] = useState(false);
+  const { t } = useLanguage();
 
   async function handleCopy() {
     if (!outputValue) return;
@@ -87,28 +89,28 @@ function EncoderSection({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <label className="text-xs text-muted font-medium uppercase tracking-wide">Input</label>
+          <label className="text-xs text-muted font-medium uppercase tracking-wide">{t('input')}</label>
           <textarea
             value={inputValue}
             onChange={(e) => onInputChange(e.target.value)}
             rows={4}
-            placeholder="Enter text here..."
+            placeholder={t('enterText')}
             className="w-full bg-sunken border border-line-strong rounded-lg px-3 py-2.5 text-ink placeholder-faint focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all text-sm font-mono resize-none"
           />
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <label className="text-xs text-muted font-medium uppercase tracking-wide">Output</label>
+            <label className="text-xs text-muted font-medium uppercase tracking-wide">{t('output')}</label>
             <button
               onClick={handleCopy}
               disabled={!outputValue}
               className="flex items-center gap-1.5 text-xs text-muted hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed border border-line-strong hover:border-line-strong px-2.5 py-1 rounded-lg transition-all"
-              aria-label="Copy output"
+              aria-label={t('copyOutput')}
             >
               {copied ? (
                 <>
                   <Check className="w-3 h-3 text-emerald-700" />
-                  <span className="text-emerald-700">Copied</span>
+                  <span className="text-emerald-700">{t('copied')}</span>
                 </>
               ) : (
                 <>
@@ -122,7 +124,7 @@ function EncoderSection({
             value={outputValue}
             readOnly
             rows={4}
-            placeholder="Result will appear here..."
+            placeholder={t('resultHere')}
             className="w-full bg-sunken border border-line-strong rounded-lg px-3 py-2.5 text-brand-strong placeholder-faint focus:outline-none text-sm font-mono resize-none cursor-default"
           />
         </div>
@@ -151,6 +153,7 @@ function EncoderSection({
 // ---- Main Page ----
 
 export default function EncoderPage() {
+  const { t } = useLanguage();
   // Base64 state
   const [b64Input, setB64Input] = useState('');
   const [b64Output, setB64Output] = useState('');
@@ -167,8 +170,8 @@ export default function EncoderPage() {
     <div className="min-h-screen bg-canvas text-ink">
       <PageHeader
         icon={<Code2 className="w-5 h-5 text-brand" />}
-        title="Encoder / Decoder"
-        description="Encode and decode Base64, URL, and Hex strings"
+        title={t('encoderTitle')}
+        description={t('encoderDesc')}
       />
 
       <div className="max-w-3xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
@@ -181,8 +184,8 @@ export default function EncoderPage() {
           onInputChange={(v) => { setB64Input(v); setB64Output(''); }}
           onEncode={() => setB64Output(base64Encode(b64Input))}
           onDecode={() => setB64Output(base64Decode(b64Input))}
-          encodeLabel="Encode →"
-          decodeLabel="← Decode"
+          encodeLabel={`${t('encode')} →`}
+          decodeLabel={`← ${t('decode')}`}
         />
 
         {/* URL Encode */}
@@ -205,8 +208,8 @@ export default function EncoderPage() {
           onInputChange={(v) => { setHexInput(v); setHexOutput(''); }}
           onEncode={() => setHexOutput(toHex(hexInput))}
           onDecode={() => setHexOutput(fromHex(hexInput))}
-          encodeLabel="To Hex →"
-          decodeLabel="← From Hex"
+          encodeLabel={`${t('toHex')} →`}
+          decodeLabel={`← ${t('fromHex')}`}
         />
 
       </div>
