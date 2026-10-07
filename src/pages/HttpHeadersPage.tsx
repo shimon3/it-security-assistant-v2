@@ -65,7 +65,9 @@ export default function HttpHeadersPage() {
                     <p className="font-semibold text-amber-800">{t('websiteUnreachable')}</p>
                     <p className="text-sm text-amber-800/80 mt-1">{t('websiteUnreachableDesc')}</p>
                   </div>
-                  <div className="shrink-0 rounded-xl border-2 border-amber-300 bg-white px-4 py-2 text-xl font-bold text-amber-800">{t('notApplicable')}</div>
+                  <div className="shrink-0 rounded-xl border-2 border-amber-300 bg-white px-4 py-2 text-xl font-bold text-amber-800">
+                    {t('notApplicable')}
+                  </div>
                 </div>
                 <div className="text-sm text-amber-900 space-y-1 pt-1">
                   <p>{t('httpsInconclusive')}</p>
@@ -74,17 +76,15 @@ export default function HttpHeadersPage() {
               </div>
             ) : score ? (
               <>
-            <GradeCard
-          <div className="space-y-4 animate-fade-in">
-            <GradeCard
-              subject={data.https.finalUrl ?? data.domain}
-              score={score}
-              copyText={findingsText(`Website security headers — ${data.domain}`, data.checkedAt, score, [
-                'Response headers',
-                ...headers.map(([k, v]) => `  ${k}: ${v}`),
-              ])}
-            />
-            <FindingList findings={score.findings} />
+                <GradeCard
+                  subject={data.https.finalUrl ?? data.domain}
+                  score={score}
+                  copyText={findingsText(`Website security headers — ${data.domain}`, data.checkedAt, score, [
+                    'Response headers',
+                    ...headers.map(([k, v]) => `  ${k}: ${v}`),
+                  ])}
+                />
+                <FindingList findings={score.findings} />
               </>
             ) : null}
 
@@ -111,6 +111,8 @@ export default function HttpHeadersPage() {
                         {data.http.location ? ` → ${data.http.location}` : ''}
                       </li>
                     )}
+                    {data.https.error && <li>HTTPS: {data.https.error}</li>}
+                    {data.http.error && <li>HTTP: {data.http.error}</li>}
                   </ol>
                   <dl className="space-y-2">
                     {headers.length === 0 && <p className="text-muted">{t('noHeaders')}</p>}
