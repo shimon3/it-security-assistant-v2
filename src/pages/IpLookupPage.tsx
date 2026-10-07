@@ -43,16 +43,16 @@ export default function IpLookupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-canvas text-ink">
       <PageHeader
-        icon={<Globe className="w-5 h-5 text-sky-400" />}
+        icon={<Globe className="w-5 h-5 text-brand" />}
         title="IP Lookup"
         description="Check IP address reputation via VirusTotal"
       />
 
       <div className="max-w-2xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
         <div className="space-y-3">
-          <label className="text-sm font-medium text-slate-300">IP Address</label>
+          <label className="text-sm font-medium text-ink-2">IP Address</label>
           <div className="flex gap-3">
             <input
               type="text"
@@ -60,19 +60,19 @@ export default function IpLookupPage() {
               onChange={(e) => { setInput(e.target.value); if (error) setError(''); }}
               onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
               placeholder="e.g. 8.8.8.8"
-              className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 placeholder-slate-600 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all text-sm"
+              className="flex-1 bg-surface border border-line rounded-xl px-4 py-3 text-ink placeholder-faint focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all text-sm"
             />
             <button
               onClick={handleLookup}
               disabled={loading}
-              className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 disabled:bg-sky-500/50 disabled:cursor-not-allowed text-white font-semibold px-5 py-3 rounded-xl transition-all text-sm"
+              className="flex items-center gap-2 bg-brand hover:bg-brand-strong disabled:bg-brand/50 disabled:cursor-not-allowed text-white font-semibold px-5 py-3 rounded-xl transition-all text-sm"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
               Lookup
             </button>
           </div>
-          {error && <p className="text-red-400 text-xs">{error}</p>}
-          <p className="text-xs text-slate-600">Press Enter to look up. Supports IPv4 and IPv6 addresses.</p>
+          {error && <p className="text-red-700 text-xs">{error}</p>}
+          <p className="text-xs text-faint">Press Enter to look up. Supports IPv4 and IPv6 addresses.</p>
         </div>
 
         {result && (
@@ -87,20 +87,20 @@ export default function IpLookupPage() {
             />
 
             {/* IP Details */}
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
-              <p className="text-sm font-semibold text-slate-300">IP Details</p>
+            <div className="bg-surface border border-line rounded-xl p-5 space-y-4">
+              <p className="text-sm font-semibold text-ink-2">IP Details</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
-                  <p className="text-xs text-slate-500 mb-1">Country</p>
-                  <p className="text-sm font-medium text-slate-200">{result.country ?? '—'}</p>
+                <div className="bg-sunken rounded-lg p-3 border border-line-strong">
+                  <p className="text-xs text-muted mb-1">Country</p>
+                  <p className="text-sm font-medium text-ink">{result.country ?? '—'}</p>
                 </div>
-                <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
-                  <p className="text-xs text-slate-500 mb-1">ASN</p>
-                  <p className="text-sm font-medium text-slate-200">{result.asn != null ? `AS${result.asn}` : '—'}</p>
+                <div className="bg-sunken rounded-lg p-3 border border-line-strong">
+                  <p className="text-xs text-muted mb-1">ASN</p>
+                  <p className="text-sm font-medium text-ink">{result.asn != null ? `AS${result.asn}` : '—'}</p>
                 </div>
-                <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700 col-span-2 sm:col-span-1">
-                  <p className="text-xs text-slate-500 mb-1">AS Owner</p>
-                  <p className="text-sm font-medium text-slate-200 truncate">{result.asOwner ?? '—'}</p>
+                <div className="bg-sunken rounded-lg p-3 border border-line-strong col-span-2 sm:col-span-1">
+                  <p className="text-xs text-muted mb-1">AS Owner</p>
+                  <p className="text-sm font-medium text-ink truncate">{result.asOwner ?? '—'}</p>
                 </div>
               </div>
             </div>

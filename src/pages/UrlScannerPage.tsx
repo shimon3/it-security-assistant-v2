@@ -44,22 +44,22 @@ export default function UrlScannerPage({ initialUrl = '', onUrlConsumed }: UrlSc
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-canvas text-ink">
       <PageHeader
-        icon={<Globe className="w-5 h-5 text-sky-400" />}
+        icon={<Globe className="w-5 h-5 text-brand" />}
         title="URL Scanner"
         description="Check any URL or domain against VirusTotal's 90+ security engines"
       />
 
       <div className="max-w-2xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
         {initialUrl && (
-          <div className="flex items-center gap-2 text-xs text-sky-400 bg-sky-500/10 border border-sky-500/20 rounded-lg px-3 py-2">
+          <div className="flex items-center gap-2 text-xs text-brand bg-brand-soft border border-brand/25 rounded-lg px-3 py-2">
             <Globe className="w-3.5 h-3.5 shrink-0" />
             URL imported from QR code scanner
           </div>
         )}
         <div className="space-y-3">
-          <label className="text-sm font-medium text-slate-300">URL or Domain</label>
+          <label className="text-sm font-medium text-ink-2">URL or Domain</label>
           <div className="flex gap-3">
             <input
               type="text"
@@ -67,19 +67,19 @@ export default function UrlScannerPage({ initialUrl = '', onUrlConsumed }: UrlSc
               onChange={(e) => { setInput(e.target.value); if (error) setError(''); }}
               onKeyDown={(e) => e.key === 'Enter' && handleScan()}
               placeholder="e.g. evil-login.xyz or https://phishing.example.com"
-              className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 placeholder-slate-600 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all text-sm"
+              className="flex-1 bg-surface border border-line rounded-xl px-4 py-3 text-ink placeholder-faint focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all text-sm"
             />
             <button
               onClick={handleScan}
               disabled={loading}
-              className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 disabled:bg-sky-500/50 disabled:cursor-not-allowed text-white font-semibold px-5 py-3 rounded-xl transition-all text-sm"
+              className="flex items-center gap-2 bg-brand hover:bg-brand-strong disabled:bg-brand/50 disabled:cursor-not-allowed text-white font-semibold px-5 py-3 rounded-xl transition-all text-sm"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
               Scan
             </button>
           </div>
-          {error && <p className="text-red-400 text-xs">{error}</p>}
-          <p className="text-xs text-slate-600">Protocol (https://) is added automatically if missing. Press Enter to scan.</p>
+          {error && <p className="text-red-700 text-xs">{error}</p>}
+          <p className="text-xs text-faint">Protocol (https://) is added automatically if missing. Press Enter to scan.</p>
         </div>
 
         {result && (

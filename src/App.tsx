@@ -21,7 +21,7 @@ import DomainAuditPage from './pages/DomainAuditPage';
 
 export default function App() {
   const [inApp, setInApp] = useState(false);
-  const [activeTool, setActiveTool] = useState<Tool>('email');
+  const [activeTool, setActiveTool] = useState<Tool>('domainaudit');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [qrUrl, setQrUrl] = useState('');
   const [askToken, setAskToken] = useState(false);
@@ -55,12 +55,12 @@ export default function App() {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-950">
+    <div className="flex min-h-screen bg-canvas">
       {askToken && <TokenPrompt onClose={() => setAskToken(false)} />}
       {/* Mobile backdrop */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/60 z-40 md:hidden"
+          className="fixed inset-0 bg-ink/30 z-40 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -75,16 +75,16 @@ export default function App() {
 
       <div className="flex-1 min-w-0 flex flex-col">
         {/* Mobile sticky header */}
-        <div className="md:hidden sticky top-0 z-30 flex items-center gap-3 px-4 py-3 bg-slate-900 border-b border-slate-800">
+        <div className="md:hidden sticky top-0 z-30 flex items-center gap-3 px-4 py-3 bg-surface border-b border-line">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="text-slate-400 hover:text-white transition-colors"
+            className="text-muted hover:text-ink transition-colors"
             aria-label="Open menu"
           >
             <Menu className="w-5 h-5" />
           </button>
-          <Shield className="w-4 h-4 text-sky-400 shrink-0" strokeWidth={1.5} />
-          <span className="text-sm font-semibold text-slate-200">IT Security Assistant</span>
+          <Shield className="w-4 h-4 text-brand shrink-0" strokeWidth={1.5} />
+          <span className="text-sm font-semibold text-ink">IT Security Assistant</span>
         </div>
 
         {activeTool === 'email'   && <AnalysisPage onBack={() => setInApp(false)} />}

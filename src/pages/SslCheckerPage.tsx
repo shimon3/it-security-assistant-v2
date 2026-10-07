@@ -14,19 +14,19 @@ interface SslResult {
 }
 
 function gradeColor(grade: string | null): string {
-  if (!grade) return 'text-slate-400';
-  if (grade === 'A+' || grade === 'A') return 'text-emerald-400';
-  if (grade === 'B') return 'text-sky-400';
-  if (grade === 'C') return 'text-amber-400';
-  return 'text-red-400';
+  if (!grade) return 'text-muted';
+  if (grade === 'A+' || grade === 'A') return 'text-emerald-700';
+  if (grade === 'B') return 'text-brand';
+  if (grade === 'C') return 'text-amber-700';
+  return 'text-red-700';
 }
 
 function gradeBg(grade: string | null): string {
-  if (!grade) return 'bg-slate-800 border-slate-700';
-  if (grade === 'A+' || grade === 'A') return 'bg-emerald-500/10 border-emerald-500/20';
-  if (grade === 'B') return 'bg-sky-500/10 border-sky-500/20';
-  if (grade === 'C') return 'bg-amber-500/10 border-amber-500/20';
-  return 'bg-red-500/10 border-red-500/20';
+  if (!grade) return 'bg-sunken border-line-strong';
+  if (grade === 'A+' || grade === 'A') return 'bg-emerald-50 border-emerald-200';
+  if (grade === 'B') return 'bg-brand-soft border-brand/25';
+  if (grade === 'C') return 'bg-amber-50 border-amber-200';
+  return 'bg-red-50 border-red-200';
 }
 
 export default function SslCheckerPage() {
@@ -54,16 +54,16 @@ export default function SslCheckerPage() {
   }
 
   const statusColor = result?.status === 'valid'
-    ? 'text-emerald-400'
+    ? 'text-emerald-700'
     : result?.status === 'expiring'
-    ? 'text-amber-400'
-    : 'text-red-400';
+    ? 'text-amber-700'
+    : 'text-red-700';
 
   const statusBg = result?.status === 'valid'
-    ? 'bg-emerald-500/10 border-emerald-500/20'
+    ? 'bg-emerald-50 border-emerald-200'
     : result?.status === 'expiring'
-    ? 'bg-amber-500/10 border-amber-500/20'
-    : 'bg-red-500/10 border-red-500/20';
+    ? 'bg-amber-50 border-amber-200'
+    : 'bg-red-50 border-red-200';
 
   const statusLabel: Record<string, string> = {
     valid: 'Certificate Valid',
@@ -74,16 +74,16 @@ export default function SslCheckerPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-canvas text-ink">
       <PageHeader
-        icon={<ShieldCheck className="w-5 h-5 text-sky-400" />}
+        icon={<ShieldCheck className="w-5 h-5 text-brand" />}
         title="SSL/TLS Checker"
         description="Verify SSL certificate validity and grade via Qualys SSL Labs"
       />
 
       <div className="max-w-2xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
         <div className="space-y-3">
-          <label className="text-sm font-medium text-slate-300">Domain</label>
+          <label className="text-sm font-medium text-ink-2">Domain</label>
           <div className="flex gap-3">
             <input
               type="text"
@@ -91,19 +91,19 @@ export default function SslCheckerPage() {
               onChange={(e) => { setInput(e.target.value); if (error) setError(''); }}
               onKeyDown={(e) => e.key === 'Enter' && handleCheck()}
               placeholder="e.g. github.com"
-              className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 placeholder-slate-600 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all text-sm"
+              className="flex-1 bg-surface border border-line rounded-xl px-4 py-3 text-ink placeholder-faint focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all text-sm"
             />
             <button
               onClick={() => handleCheck()}
               disabled={loading}
-              className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 disabled:bg-sky-500/50 disabled:cursor-not-allowed text-white font-semibold px-5 py-3 rounded-xl transition-all text-sm"
+              className="flex items-center gap-2 bg-brand hover:bg-brand-strong disabled:bg-brand/50 disabled:cursor-not-allowed text-white font-semibold px-5 py-3 rounded-xl transition-all text-sm"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
               Check
             </button>
           </div>
-          {error && <p className="text-red-400 text-xs">{error}</p>}
-          <p className="text-xs text-slate-600">Protocol is stripped automatically. Powered by Qualys SSL Labs.</p>
+          {error && <p className="text-red-700 text-xs">{error}</p>}
+          <p className="text-xs text-faint">Protocol is stripped automatically. Powered by Qualys SSL Labs.</p>
         </div>
 
         {result && (
@@ -111,20 +111,20 @@ export default function SslCheckerPage() {
             {/* Main status */}
             <div className={`flex items-center justify-between rounded-xl border px-5 py-4 ${
               result.status === 'pending' || result.status === 'error'
-                ? 'bg-slate-800/50 border-slate-700'
+                ? 'bg-sunken border-line-strong'
                 : statusBg
             }`}>
               <div className="flex items-center gap-3">
                 <ShieldCheck className={`w-5 h-5 shrink-0 ${
-                  result.status === 'pending' || result.status === 'error' ? 'text-slate-400' : statusColor
+                  result.status === 'pending' || result.status === 'error' ? 'text-muted' : statusColor
                 }`} />
                 <div>
                   <p className={`font-semibold text-sm ${
-                    result.status === 'pending' || result.status === 'error' ? 'text-slate-300' : statusColor
+                    result.status === 'pending' || result.status === 'error' ? 'text-ink-2' : statusColor
                   }`}>
                     {statusLabel[result.status] ?? result.status}
                   </p>
-                  <p className="text-xs text-slate-500 mt-0.5">{result.domain}</p>
+                  <p className="text-xs text-muted mt-0.5">{result.domain}</p>
                 </div>
               </div>
               {result.grade && (
@@ -136,13 +136,13 @@ export default function SslCheckerPage() {
 
             {/* Error / pending message */}
             {result.errorMessage && (
-              <div className="flex items-center justify-between bg-slate-900 border border-slate-800 rounded-xl px-4 py-3">
-                <p className="text-slate-400 text-sm">{result.errorMessage}</p>
+              <div className="flex items-center justify-between bg-surface border border-line rounded-xl px-4 py-3">
+                <p className="text-muted text-sm">{result.errorMessage}</p>
                 {result.status === 'pending' && (
                   <button
                     onClick={() => handleCheck(result.domain)}
                     disabled={loading}
-                    className="flex items-center gap-1.5 text-xs text-sky-400 hover:text-sky-300 border border-sky-500/30 px-3 py-1.5 rounded-lg transition-all"
+                    className="flex items-center gap-1.5 text-xs text-brand hover:text-brand-strong border border-brand/30 px-3 py-1.5 rounded-lg transition-all"
                   >
                     <RefreshCw className="w-3 h-3" />
                     Retry
@@ -153,16 +153,16 @@ export default function SslCheckerPage() {
 
             {/* Details */}
             {(result.daysRemaining !== null || result.issuer) && (
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
-                <p className="text-sm font-semibold text-slate-300">Certificate Details</p>
+              <div className="bg-surface border border-line rounded-xl p-5 space-y-4">
+                <p className="text-sm font-semibold text-ink-2">Certificate Details</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {result.daysRemaining !== null && (
-                    <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
-                      <p className="text-xs text-slate-500 mb-1">Expires in</p>
+                    <div className="bg-sunken rounded-lg p-3 border border-line-strong">
+                      <p className="text-xs text-muted mb-1">Expires in</p>
                       <p className={`text-sm font-bold ${
-                        result.daysRemaining <= 0 ? 'text-red-400'
-                        : result.daysRemaining <= 30 ? 'text-amber-400'
-                        : 'text-emerald-400'
+                        result.daysRemaining <= 0 ? 'text-red-700'
+                        : result.daysRemaining <= 30 ? 'text-amber-700'
+                        : 'text-emerald-700'
                       }`}>
                         {result.daysRemaining <= 0
                           ? 'Expired'
@@ -171,17 +171,17 @@ export default function SslCheckerPage() {
                     </div>
                   )}
                   {result.expiryDate && (
-                    <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
-                      <p className="text-xs text-slate-500 mb-1">Expiry Date</p>
-                      <p className="text-sm font-medium text-slate-200">
+                    <div className="bg-sunken rounded-lg p-3 border border-line-strong">
+                      <p className="text-xs text-muted mb-1">Expiry Date</p>
+                      <p className="text-sm font-medium text-ink">
                         {new Date(result.expiryDate).toLocaleDateString()}
                       </p>
                     </div>
                   )}
                   {result.issuer && (
-                    <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700 sm:col-span-2">
-                      <p className="text-xs text-slate-500 mb-1">Certificate Authority</p>
-                      <p className="text-sm font-medium text-slate-200 truncate">{result.issuer}</p>
+                    <div className="bg-sunken rounded-lg p-3 border border-line-strong sm:col-span-2">
+                      <p className="text-xs text-muted mb-1">Certificate Authority</p>
+                      <p className="text-sm font-medium text-ink truncate">{result.issuer}</p>
                     </div>
                   )}
                 </div>
@@ -190,9 +190,9 @@ export default function SslCheckerPage() {
 
             {/* Grade explanation */}
             {result.grade && (
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  <span className="text-slate-400 font-medium">SSL Labs grades: </span>
+              <div className="bg-surface border border-line rounded-xl p-4">
+                <p className="text-xs text-muted leading-relaxed">
+                  <span className="text-muted font-medium">SSL Labs grades: </span>
                   A+/A = excellent · B = minor issues · C = moderate issues · D/F = serious issues · T = untrusted cert
                 </p>
               </div>

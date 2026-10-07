@@ -12,46 +12,46 @@ const STATUS_CONFIG: Record<VTStatus, {
   border: string;
 }> = {
   malicious: {
-    icon: <XCircle className="w-5 h-5 text-red-400" />,
+    icon: <XCircle className="w-5 h-5 text-red-700" />,
     label: 'Malicious',
-    color: 'text-red-400',
-    bg: 'bg-red-500/10',
-    border: 'border-red-500/20',
+    color: 'text-red-700',
+    bg: 'bg-red-50',
+    border: 'border-red-200',
   },
   suspicious: {
-    icon: <AlertTriangle className="w-5 h-5 text-amber-400" />,
+    icon: <AlertTriangle className="w-5 h-5 text-amber-700" />,
     label: 'Suspicious',
-    color: 'text-amber-400',
-    bg: 'bg-amber-500/10',
-    border: 'border-amber-500/20',
+    color: 'text-amber-700',
+    bg: 'bg-amber-50',
+    border: 'border-amber-200',
   },
   clean: {
-    icon: <CheckCircle className="w-5 h-5 text-emerald-400" />,
+    icon: <CheckCircle className="w-5 h-5 text-emerald-700" />,
     label: 'Clean',
-    color: 'text-emerald-400',
-    bg: 'bg-emerald-500/10',
-    border: 'border-emerald-500/20',
+    color: 'text-emerald-700',
+    bg: 'bg-emerald-50',
+    border: 'border-emerald-200',
   },
   unknown: {
-    icon: <AlertTriangle className="w-5 h-5 text-slate-400" />,
+    icon: <AlertTriangle className="w-5 h-5 text-muted" />,
     label: 'Unknown',
-    color: 'text-slate-400',
-    bg: 'bg-slate-800',
-    border: 'border-slate-700',
+    color: 'text-muted',
+    bg: 'bg-sunken',
+    border: 'border-line-strong',
   },
   not_found: {
-    icon: <AlertTriangle className="w-5 h-5 text-slate-400" />,
+    icon: <AlertTriangle className="w-5 h-5 text-muted" />,
     label: 'Not Found',
-    color: 'text-slate-400',
-    bg: 'bg-slate-800',
-    border: 'border-slate-700',
+    color: 'text-muted',
+    bg: 'bg-sunken',
+    border: 'border-line-strong',
   },
   error: {
-    icon: <AlertTriangle className="w-5 h-5 text-slate-400" />,
+    icon: <AlertTriangle className="w-5 h-5 text-muted" />,
     label: 'Error',
-    color: 'text-slate-400',
-    bg: 'bg-slate-800',
-    border: 'border-slate-700',
+    color: 'text-muted',
+    bg: 'bg-sunken',
+    border: 'border-line-strong',
   },
 };
 
@@ -85,22 +85,22 @@ export function VTVerdictCard({
           {cfg.icon}
           <div>
             <p className={`font-bold text-lg ${cfg.color}`}>{cfg.label}</p>
-            <p className="text-slate-500 text-xs font-mono break-all mt-0.5">{label}</p>
+            <p className="text-muted text-xs font-mono break-all mt-0.5">{label}</p>
           </div>
         </div>
         {total > 0 && (
           <div className="text-right shrink-0 ml-4">
             <p className={`text-2xl font-bold ${cfg.color}`}>
               {malicious + suspicious}
-              <span className="text-slate-500 text-base font-normal">/{total}</span>
+              <span className="text-muted text-base font-normal">/{total}</span>
             </p>
-            <p className="text-xs text-slate-500">engines flagged</p>
+            <p className="text-xs text-muted">engines flagged</p>
           </div>
         )}
       </div>
       {children}
       {(status === 'unknown' || status === 'not_found' || status === 'error') && errorMessage && (
-        <div className="mt-3 text-sm text-slate-400">{errorMessage}</div>
+        <div className="mt-3 text-sm text-muted">{errorMessage}</div>
       )}
     </div>
   );
@@ -124,21 +124,21 @@ export function VTEngineBreakdown({
   headerIcon,
 }: VTEngineBreakdownProps) {
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-      <div className="flex items-center gap-2 text-slate-300 font-semibold text-sm mb-4">
-        {headerIcon ?? <ShieldAlert className="w-4 h-4 text-slate-400" />}
+    <div className="bg-surface border border-line rounded-xl p-5">
+      <div className="flex items-center gap-2 text-ink-2 font-semibold text-sm mb-4">
+        {headerIcon ?? <ShieldAlert className="w-4 h-4 text-muted" />}
         Engine Breakdown
       </div>
       <div className="grid grid-cols-4 gap-3">
         {[
-          { label: 'Malicious',  value: malicious,  color: 'text-red-400'     },
-          { label: 'Suspicious', value: suspicious,  color: 'text-amber-400'  },
-          { label: 'Harmless',   value: harmless,    color: 'text-emerald-400' },
-          { label: 'Undetected', value: undetected,  color: 'text-slate-400'  },
+          { label: 'Malicious',  value: malicious,  color: 'text-red-700'     },
+          { label: 'Suspicious', value: suspicious,  color: 'text-amber-700'  },
+          { label: 'Harmless',   value: harmless,    color: 'text-emerald-700' },
+          { label: 'Undetected', value: undetected,  color: 'text-muted'  },
         ].map(({ label, value, color }) => (
-          <div key={label} className="bg-slate-800/50 rounded-lg p-3 text-center border border-slate-700">
+          <div key={label} className="bg-sunken rounded-lg p-3 text-center border border-line-strong">
             <p className={`text-xl font-bold ${color}`}>{value}</p>
-            <p className="text-xs text-slate-500 mt-1">{label}</p>
+            <p className="text-xs text-muted mt-1">{label}</p>
           </div>
         ))}
       </div>
