@@ -115,7 +115,7 @@ export default function HttpHeadersPage() {
                     {data.http.error && <li>HTTP: {data.http.error}</li>}
                   </ol>
                   <dl className="space-y-2">
-                    {headers.length === 0 && <p className="text-muted">{t('noHeaders')}</p>}
+                    {headers.length === 0 && <p className="text-muted">{inconclusive ? t('headersNotEvaluated') : t('noHeaders')}</p>}
                     {headers.map(([k, v]) => (
                       <div key={k} className="grid grid-cols-1 sm:grid-cols-[12rem_1fr] gap-x-2">
                         <dt className="text-muted">{k}</dt>
