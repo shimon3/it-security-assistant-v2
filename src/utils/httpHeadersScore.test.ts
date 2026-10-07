@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hstsMaxAge, parseCsp, scoreHttpHeaders, type HttpHeadersData } from './httpHeadersScore';
+import { hstsMaxAge, isHttpHeadersInconclusive, parseCsp, scoreHttpHeaders, type HttpHeadersData } from './httpHeadersScore';
 
 const good: HttpHeadersData = {
   domain: 'good.co.il',
@@ -36,8 +36,24 @@ describe('scoreHttpHeaders', () => {
     );
   });
 
-  it('stops at "no HTTPS" with grade E', () => {
-    const s = scoreHttpHeaders({ ...good, https: { ok: false, status: null, finalUrl: null, chain: [], headers: {}, error: 'Could not connect' } });
+  it('marks the website audit inconclusive when neither HTTP nor HTTPS answers', () => {
+    const d: HttpHeadersData = {
+      ...good,
+      https: { ok: false, status: null, finalUrl: null, chain: [], headers: {}, error: 'Could not connect' },
+      http: { redirectsToHttps: null, status: null, location: null, error: 'Could not connect' },
+    };
+    expect(isHttpHeadersInconclusive(d)).toBe(true);
+    expect(scoreHttpHeaders(d).findings).toEqual([]);
+  });
+
+  it('keeps a critical HTTPS finding when HTTP answers but HTTPS does not', () => {
+    const d: HttpHeadersData = {
+      ...good,
+      https: { ok: false, status: null, finalUrl: null, chain: [], headers: {}, error: 'Could not connect' },
+      http: { redirectsToHttps: false, status: 200, location: null },
+    };
+    expect(isHttpHeadersInconclusive(d)).toBe(false);
+    const s = scoreHttpHeaders(d);
     expect(s.findings.map((f) => f.id)).toEqual(['https-unreachable']);
     expect(s.score).toBe(60);
   });
