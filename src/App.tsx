@@ -20,6 +20,7 @@ import PrivacyPage from './pages/PrivacyPage';
 import DomainAuditPage from './pages/DomainAuditPage';
 import HttpHeadersPage from './pages/HttpHeadersPage';
 import ReportPage from './pages/ReportPage';
+import InternalAuditPage from './pages/InternalAuditPage';
 import { DEMO_DOMAIN, setDemoMode, useDemoMode } from './utils/demoMode';
 import { clearSession, updateSession } from './utils/auditSession';
 import { useLanguage } from './i18n';
@@ -37,7 +38,7 @@ export default function App() {
 
   function startDemo() {
     setDemoMode(true);
-    updateSession({ domain: DEMO_DOMAIN, clientName: 'Example Shop Ltd', domainAudit: null, httpHeaders: null });
+    updateSession({ domain: DEMO_DOMAIN, clientName: 'Example Shop Ltd', domainAudit: null, httpHeaders: null, internalAudit: null });
     setActiveTool('domainaudit');
     setInApp(true);
   }
@@ -132,6 +133,7 @@ export default function App() {
         {activeTool === 'privacy' && <PrivacyPage />}
         {activeTool === 'domainaudit' && <DomainAuditPage />}
         {activeTool === 'httpheaders' && <HttpHeadersPage />}
+        {activeTool === 'internalaudit' && <InternalAuditPage />}
         {activeTool === 'report' && <ReportPage />}
       </div>
     </div>
