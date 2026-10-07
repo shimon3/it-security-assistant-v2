@@ -1,8 +1,8 @@
-import { Mail, Globe, Hash, Lock, Search, ShieldAlert, Code2, ShieldCheck, MailSearch, QrCode, MailCheck, Layers } from 'lucide-react';
+import { Mail, Globe, Hash, Lock, Search, ShieldAlert, Code2, ShieldCheck, MailSearch, QrCode, MailCheck, Layers, FileText } from 'lucide-react';
 
 export type Tool =
   | 'email' | 'url' | 'hash' | 'password' | 'ip' | 'domain' | 'hibp' | 'encoder' | 'ssl' | 'headers' | 'qr'
-  | 'privacy' | 'domainaudit' | 'httpheaders';
+  | 'privacy' | 'domainaudit' | 'httpheaders' | 'report';
 
 interface ToolItem {
   id: Tool;
@@ -22,6 +22,7 @@ export const TOOL_GROUPS: { name: string; tools: ToolItem[] }[] = [
       { id: 'headers', label: 'Email header analyzer', icon: MailSearch },
       { id: 'hibp', label: 'Breached passwords', icon: ShieldAlert },
       { id: 'password', label: 'Password strength', icon: Lock },
+      { id: 'report', label: 'Client report (Hebrew)', icon: FileText },
     ],
   },
   {

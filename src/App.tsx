@@ -19,6 +19,7 @@ import { isAuditMode, isPersonalOnly, useAuditMode } from './utils/auditMode';
 import PrivacyPage from './pages/PrivacyPage';
 import DomainAuditPage from './pages/DomainAuditPage';
 import HttpHeadersPage from './pages/HttpHeadersPage';
+import ReportPage from './pages/ReportPage';
 import { DEMO_DOMAIN, setDemoMode, useDemoMode } from './utils/demoMode';
 import { clearSession, updateSession } from './utils/auditSession';
 
@@ -91,7 +92,7 @@ export default function App() {
 
       <div className="flex-1 min-w-0 flex flex-col">
         {/* Mobile sticky header */}
-        <div className="md:hidden sticky top-0 z-30 flex items-center gap-3 px-4 py-3 bg-surface border-b border-line">
+        <div className="no-print md:hidden sticky top-0 z-30 flex items-center gap-3 px-4 py-3 bg-surface border-b border-line">
           <button
             onClick={() => setSidebarOpen(true)}
             className="text-muted hover:text-ink transition-colors"
@@ -104,7 +105,7 @@ export default function App() {
         </div>
 
         {demo && (
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 sm:px-8 py-2.5 bg-brand text-white text-sm" role="status">
+          <div className="no-print flex flex-wrap items-center gap-x-3 gap-y-1 px-4 sm:px-8 py-2.5 bg-brand text-white text-sm" role="status">
             <PlayCircle className="w-4 h-4 shrink-0" />
             <span className="flex-1 min-w-0">Demo: every result is made up for a fictional shop. Nothing is sent to the server.</span>
             <button onClick={exitDemo} className="font-semibold underline underline-offset-2 hover:no-underline">
@@ -127,6 +128,7 @@ export default function App() {
         {activeTool === 'privacy' && <PrivacyPage />}
         {activeTool === 'domainaudit' && <DomainAuditPage />}
         {activeTool === 'httpheaders' && <HttpHeadersPage />}
+        {activeTool === 'report' && <ReportPage />}
       </div>
     </div>
   );
