@@ -3,6 +3,7 @@ import { Shield, Search, Loader2 } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
 import { apiPost, apiErrorOf, errorMessage } from '../utils/apiClient';
 import { VTVerdictCard, VTEngineBreakdown } from '../components/VTVerdict';
+import { useLanguage } from '../i18n';
 
 interface DomainResult {
   domain: string;
@@ -34,12 +35,13 @@ export default function DomainWhoisPage() {
   const [result, setResult] = useState<DomainResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { t } = useLanguage();
 
   async function handleLookup() {
     const trimmed = input.trim();
-    if (!trimmed) { setError('Please enter a domain or URL.'); return; }
+    if (!trimmed) { setError(t('enterDomainOrUrl')); return; }
     const domain = extractDomain(trimmed);
-    if (!domain) { setError('Could not parse a domain from your input.'); return; }
+    if (!domain) { setError(t('parseDomainFailed')); return; }
     setError('');
     setResult(null);
     setLoading(true);
@@ -47,7 +49,7 @@ export default function DomainWhoisPage() {
     try {
       const res = await apiPost<DomainResult>('/api/vt-domain', { domain });
       if (res.data && 'status' in res.data) setResult(res.data);
-      else setError(apiErrorOf(res) ?? 'Lookup failed — check your connection and try again.');
+      else setError(apiErrorOf(res) ?? t('lookupFailed'));
     } catch (err) {
       setError(errorMessage(err, 'Lookup failed — check your connection and try again.'));
     } finally {
@@ -59,13 +61,13 @@ export default function DomainWhoisPage() {
     <div className="min-h-screen bg-canvas text-ink">
       <PageHeader
         icon={<Shield className="w-5 h-5 text-brand" />}
-        title="Domain WHOIS"
-        description="Lookup domain registration info and threat reputation"
+        title={t('domainWhoisTitle')}
+        description={t('domainWhoisDesc')}
       />
 
       <div className="max-w-2xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
         <div className="space-y-3">
-          <label className="text-sm font-medium text-ink-2">Domain or URL</label>
+          <label className="text-sm font-medium text-ink-2">{t('domainOrUrl')}</label>
           <div className="flex gap-3">
             <input
               type="text"
@@ -73,7 +75,7 @@ export default function DomainWhoisPage() {
               onChange={(e) => { setInput(e.target.value); if (error) setError(''); }}
               onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
               placeholder="e.g. suspicious-site.xyz"
-              className="flex-1 bg-surface border border-line rounded-xl px-4 py-3 text-ink placeholder-faint focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all text-sm"
+              dir="ltr" className="flex-1 bg-surface border border-line rounded-xl px-4 py-3 text-ink placeholder-faint focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all text-sm"
             />
             <button
               onClick={handleLookup}
@@ -85,7 +87,7 @@ export default function DomainWhoisPage() {
             </button>
           </div>
           {error && <p className="text-red-700 text-xs">{error}</p>}
-          <p className="text-xs text-faint">Press Enter to look up. The protocol and path are stripped automatically.</p>
+          <p className="text-xs text-faint">{t('domainLookupHint')}</p>
         </div>
 
         {result && (
@@ -99,16 +101,16 @@ export default function DomainWhoisPage() {
               errorMessage={result.errorMessage}
             />
 
-            {/* Domain Info */}
+            {/* {t('domainInfo')} */}
             <div className="bg-surface border border-line rounded-xl p-5 space-y-4">
               <p className="text-sm font-semibold text-ink-2">Domain Info</p>
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-sunken rounded-lg p-3 border border-line-strong">
-                  <p className="text-xs text-muted mb-1">Registrar</p>
+                  <p className="text-xs text-muted mb-1">{t('registrar')}</p>
                   <p className="text-sm font-medium text-ink truncate">{result.registrar ?? '—'}</p>
                 </div>
                 <div className="bg-sunken rounded-lg p-3 border border-line-strong">
-                  <p className="text-xs text-muted mb-1">Creation Date</p>
+                  <p className="text-xs text-muted mb-1">{t('creationDate')}</p>
                   <p className="text-sm font-medium text-ink">
                     {result.creationDate != null
                       ? new Date(result.creationDate * 1000).toLocaleDateString()
@@ -119,7 +121,7 @@ export default function DomainWhoisPage() {
 
               {result.categories.length > 0 && (
                 <div>
-                  <p className="text-xs text-muted mb-2">Categories</p>
+                  <p className="text-xs text-muted mb-2">{t('categories')}</p>
                   <div className="flex flex-wrap gap-2">
                     {result.categories.map((cat) => (
                       <span
