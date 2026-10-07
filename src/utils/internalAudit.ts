@@ -138,6 +138,11 @@ export function hasAssessedInternalControls(data: InternalAuditData | null): boo
   return INTERNAL_CONTROLS.some((c) => ['yes', 'partial', 'no'].includes(data.answers[c.id]));
 }
 
+export function isInternalAuditComplete(data: InternalAuditData | null): boolean {
+  if (!data) return false;
+  return INTERNAL_CONTROLS.every((c) => data.answers[c.id] !== 'unknown');
+}
+
 function findingFor(control: InternalControl, answer: Exclude<InternalAnswer, 'unknown' | 'na'>, observation: string): Finding {
   if (answer === 'yes') {
     return {
