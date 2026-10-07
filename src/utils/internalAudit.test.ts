@@ -1,11 +1,34 @@
 import { describe, expect, it } from 'vitest';
-import { emptyInternalAudit, hasAssessedInternalControls, scoreInternalAudit } from './internalAudit';
+import {
+  INTERNAL_CATEGORIES,
+  INTERNAL_CONTROLS,
+  emptyInternalAudit,
+  hasAssessedInternalControls,
+  internalScoreCaps,
+  isInternalAuditComplete,
+  scoreInternalAudit,
+} from './internalAudit';
 
 describe('internal SMB audit scoring', () => {
+  it('organizes controls into the expected audit categories', () => {
+    expect(INTERNAL_CATEGORIES.map((c) => c.id)).toEqual([
+      'identity',
+      'endpoints',
+      'backup',
+      'network',
+      'remote',
+      'data',
+      'people',
+    ]);
+    expect(INTERNAL_CONTROLS).toHaveLength(20);
+    expect(INTERNAL_CONTROLS.every((control) => INTERNAL_CATEGORIES.some((category) => category.id === control.category))).toBe(true);
+  });
+
   it('does not count unknown or N/A controls as assessed', () => {
     const d = emptyInternalAudit();
     d.answers.mfa = 'na';
     expect(hasAssessedInternalControls(d)).toBe(false);
+    expect(isInternalAuditComplete(d)).toBe(false);
   });
 
   it('scores only controls that were actually assessed', () => {
@@ -14,7 +37,7 @@ describe('internal SMB audit scoring', () => {
     d.answers.backups = 'no';
 
     const s = scoreInternalAudit(d);
-    expect(s.score).toBe(Math.round((18 / (18 + 16)) * 100));
+    expect(s.score).toBe(48); // weighted score is 52, but missing backups caps the score at 74; 14/(14+13)=51.85
     expect(s.findings.map((f) => f.id)).toEqual(expect.arrayContaining(['internal-mfa-ok', 'internal-backups-no']));
   });
 
@@ -50,20 +73,53 @@ describe('internal SMB audit scoring', () => {
     expect(d.evidence.mfa).toBe('client');
   });
 
-  it('defaults evidence status to unverified', () => {
+  it('defaults evidence status to unverified for every control', () => {
     const d = emptyInternalAudit();
-    expect(d.evidence.mfa).toBe('unverified');
-    expect(d.evidence.backups).toBe('unverified');
+    expect(INTERNAL_CONTROLS.every((control) => d.evidence[control.id] === 'unverified')).toBe(true);
+  });
+
+  it('prevents an A when MFA is completely missing', () => {
+    const d = emptyInternalAudit();
+    for (const control of INTERNAL_CONTROLS) d.answers[control.id] = 'yes';
+    d.answers.mfa = 'no';
+
+    const caps = internalScoreCaps(d);
+    const s = scoreInternalAudit(d);
+
+    expect(caps.some((cap) => cap.controlId === 'mfa' && cap.maxScore === 89)).toBe(true);
+    expect(s.score).toBe(89);
+    expect(s.grade).toBe('B');
+  });
+
+  it('prevents A and B when adequate backups are completely missing', () => {
+    const d = emptyInternalAudit();
+    for (const control of INTERNAL_CONTROLS) d.answers[control.id] = 'yes';
+    d.answers.backups = 'no';
+
+    const s = scoreInternalAudit(d);
+    expect(s.score).toBe(74);
+    expect(s.grade).toBe('C');
+  });
+
+  it('uses the strictest cap when several critical controls are missing', () => {
+    const d = emptyInternalAudit();
+    for (const control of INTERNAL_CONTROLS) d.answers[control.id] = 'yes';
+    d.answers.mfa = 'no';
+    d.answers.edr = 'no';
+    d.answers.remoteAccess = 'no';
+
+    expect(internalScoreCaps(d).map((cap) => cap.maxScore)).toEqual([74, 89, 89]);
+    expect(scoreInternalAudit(d).score).toBe(74);
   });
 
   it('gives 100 when every assessed control is in place', () => {
     const d = emptyInternalAudit();
-    d.answers.mfa = 'yes';
-    d.answers.edr = 'yes';
+    for (const control of INTERNAL_CONTROLS) d.answers[control.id] = 'yes';
 
     const s = scoreInternalAudit(d);
     expect(s.score).toBe(100);
     expect(s.grade).toBe('A');
     expect(s.findings.every((f) => f.severity === 'ok')).toBe(true);
+    expect(isInternalAuditComplete(d)).toBe(true);
   });
 });
