@@ -85,7 +85,28 @@ describe('buildReport', () => {
     })!;
 
     expect(r.sections.map((s) => s.key)).toEqual(['email', 'web', 'internal']);
+    expect(r.sections.find((s) => s.key === 'internal')?.includedInOverall).toBe(false);
     expect(r.problems.some((p) => p.section === 'internal')).toBe(true);
+    expect(r.overall!.score).toBe(Math.round((r.sections[0].score.score + r.sections[1].score.score) / 2));
+  });
+
+  it('includes a completed internal questionnaire in the overall score', () => {
+    const internalAudit = emptyInternalAudit();
+    for (const key of Object.keys(internalAudit.answers) as Array<keyof typeof internalAudit.answers>) {
+      internalAudit.answers[key] = 'yes';
+    }
+
+    const r = buildReport({
+      ...base,
+      domainAudit: demoDomainAudit(base.domain),
+      httpHeaders: null,
+      internalAudit,
+    })!;
+
+    const internal = r.sections.find((s) => s.key === 'internal')!;
+    expect(internal.includedInOverall).toBe(true);
+    expect(internal.score.score).toBe(100);
+    expect(r.overall!.score).toBe(Math.round((r.sections[0].score.score + 100) / 2));
   });
 
   it('can produce an N/A report when only an unreachable website check exists', () => {
