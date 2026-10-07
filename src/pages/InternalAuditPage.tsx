@@ -12,6 +12,7 @@ import {
   type InternalControlId,
 } from '../utils/internalAudit';
 import { useLanguage } from '../i18n';
+import { emptyClientEnvironment, type ClientEnvironment, type EmailPlatform, type Presence } from '../utils/clientEnvironment';
 
 const ANSWERS: { value: InternalAnswer; en: string; he: string }[] = [
   { value: 'yes', en: 'Yes', he: 'כן' },
@@ -33,9 +34,14 @@ export default function InternalAuditPage() {
   const session = useAuditSession();
   const { language, t } = useLanguage();
   const data = session.internalAudit ?? emptyInternalAudit();
+  const environment = session.clientEnvironment ?? emptyClientEnvironment();
   const assessed = hasAssessedInternalControls(data);
   const score = assessed ? scoreInternalAudit(data) : null;
   const answered = INTERNAL_CONTROLS.filter((c) => data.answers[c.id] !== 'unknown').length;
+
+  function updateEnvironment(patch: Partial<ClientEnvironment>) {
+    updateSession({ clientEnvironment: { ...environment, ...patch } });
+  }
 
   function updateAnswer(id: InternalControlId, answer: InternalAnswer) {
     const next: InternalAuditData = {
@@ -69,6 +75,89 @@ export default function InternalAuditPage() {
       />
 
       <div className="max-w-3xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
+        <section className="rounded-xl border border-line bg-surface p-5">
+          <div className="mb-4">
+            <h2 className="font-semibold text-ink">{t('clientEnvironmentTitle')}</h2>
+            <p className="mt-1 text-sm text-muted">{t('clientEnvironmentDesc')}</p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="space-y-1.5 text-sm font-medium text-ink-2">
+              {t('environmentUsers')}
+              <input
+                value={environment.users}
+                onChange={(e) => updateEnvironment({ users: e.target.value.replace(/[^0-9]/g, '').slice(0, 5) })}
+                inputMode="numeric"
+                className="w-full rounded-lg border border-line bg-canvas px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20"
+                placeholder="25"
+              />
+            </label>
+            <label className="space-y-1.5 text-sm font-medium text-ink-2">
+              {t('environmentEndpoints')}
+              <input
+                value={environment.endpoints}
+                onChange={(e) => updateEnvironment({ endpoints: e.target.value.replace(/[^0-9]/g, '').slice(0, 5) })}
+                inputMode="numeric"
+                className="w-full rounded-lg border border-line bg-canvas px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20"
+                placeholder="30"
+              />
+            </label>
+            <label className="space-y-1.5 text-sm font-medium text-ink-2">
+              {t('environmentEmailPlatform')}
+              <select
+                value={environment.emailPlatform}
+                onChange={(e) => updateEnvironment({ emailPlatform: e.target.value as EmailPlatform })}
+                className="w-full rounded-lg border border-line bg-canvas px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20"
+              >
+                <option value="">{t('environmentNotSpecified')}</option>
+                <option value="microsoft365">Microsoft 365</option>
+                <option value="googleWorkspace">Google Workspace</option>
+                <option value="other">{t('environmentOther')}</option>
+                <option value="none">{t('environmentNoEmail')}</option>
+              </select>
+            </label>
+            <label className="space-y-1.5 text-sm font-medium text-ink-2">
+              {t('environmentServers')}
+              <select
+                value={environment.servers}
+                onChange={(e) => updateEnvironment({ servers: e.target.value as Presence })}
+                className="w-full rounded-lg border border-line bg-canvas px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20"
+              >
+                <option value="">{t('environmentNotSpecified')}</option>
+                <option value="yes">{t('answerYes')}</option>
+                <option value="no">{t('answerNo')}</option>
+                <option value="unknown">{t('answerUnknown')}</option>
+              </select>
+            </label>
+            <label className="space-y-1.5 text-sm font-medium text-ink-2">
+              {t('environmentEndpointProtection')}
+              <input
+                value={environment.endpointProtection}
+                onChange={(e) => updateEnvironment({ endpointProtection: e.target.value.slice(0, 100) })}
+                className="w-full rounded-lg border border-line bg-canvas px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20"
+                placeholder="Microsoft Defender / Sophos / ..."
+              />
+            </label>
+            <label className="space-y-1.5 text-sm font-medium text-ink-2">
+              {t('environmentBackup')}
+              <input
+                value={environment.backupSolution}
+                onChange={(e) => updateEnvironment({ backupSolution: e.target.value.slice(0, 100) })}
+                className="w-full rounded-lg border border-line bg-canvas px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20"
+                placeholder="Acronis / Veeam / ..."
+              />
+            </label>
+            <label className="space-y-1.5 text-sm font-medium text-ink-2 sm:col-span-2">
+              {t('environmentRemoteAccess')}
+              <input
+                value={environment.remoteAccess}
+                onChange={(e) => updateEnvironment({ remoteAccess: e.target.value.slice(0, 120) })}
+                className="w-full rounded-lg border border-line bg-canvas px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20"
+                placeholder="VPN / RDP / AnyDesk / none"
+              />
+            </label>
+          </div>
+          <p className="mt-3 text-xs text-muted">{t('clientEnvironmentNotScored')}</p>
+        </section>
         <div className="rounded-xl border border-line bg-surface p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
