@@ -26,6 +26,7 @@ export interface InternalControl {
 
 export interface InternalAuditData {
   answers: Record<InternalControlId, InternalAnswer>;
+  observations: Record<InternalControlId, string>;
   notes: string;
   completedAt: string | null;
 }
@@ -126,6 +127,7 @@ export const INTERNAL_CONTROLS: InternalControl[] = [
 export function emptyInternalAudit(): InternalAuditData {
   return {
     answers: Object.fromEntries(INTERNAL_CONTROLS.map((c) => [c.id, 'unknown'])) as Record<InternalControlId, InternalAnswer>,
+    observations: Object.fromEntries(INTERNAL_CONTROLS.map((c) => [c.id, ''])) as Record<InternalControlId, string>,
     notes: '',
     completedAt: null,
   };
@@ -136,7 +138,7 @@ export function hasAssessedInternalControls(data: InternalAuditData | null): boo
   return INTERNAL_CONTROLS.some((c) => ['yes', 'partial', 'no'].includes(data.answers[c.id]));
 }
 
-function findingFor(control: InternalControl, answer: Exclude<InternalAnswer, 'unknown' | 'na'>): Finding {
+function findingFor(control: InternalControl, answer: Exclude<InternalAnswer, 'unknown' | 'na'>, observation: string): Finding {
   if (answer === 'yes') {
     return {
       id: `internal-${control.id}-ok`,
@@ -146,6 +148,7 @@ function findingFor(control: InternalControl, answer: Exclude<InternalAnswer, 'u
       title: `${control.labelEn}: in place`,
       impact: 'The control is reported as implemented.',
       recommendation: '—',
+      detail: observation.trim() || undefined,
       params: {
         heTitle: `${control.labelHe} — תקין`,
         heImpact: 'הבקרה דווחה כמיושמת.',
@@ -164,6 +167,7 @@ function findingFor(control: InternalControl, answer: Exclude<InternalAnswer, 'u
     title: partial ? `${control.labelEn}: partially implemented` : `${control.labelEn}: not implemented`,
     impact: 'Consultant questionnaire finding.',
     recommendation: control.fixHe,
+    detail: observation.trim() || undefined,
     params: {
       heTitle: partial ? `${control.labelHe} — מיושם חלקית` : `${control.labelHe} — לא מיושם`,
       heImpact: control.impactHe,
@@ -186,7 +190,7 @@ export function scoreInternalAudit(data: InternalAuditData): Score {
   }, 0);
   const score = Math.round((earned / max) * 100);
   const findings = assessed
-    .map((c) => findingFor(c, data.answers[c.id] as 'yes' | 'partial' | 'no'))
+    .map((c) => findingFor(c, data.answers[c.id] as 'yes' | 'partial' | 'no', data.observations[c.id] ?? ''))
     .sort((a, b) => SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity));
 
   return { score, grade: gradeFor(score), findings };
