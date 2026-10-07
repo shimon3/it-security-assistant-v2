@@ -4,7 +4,7 @@ import { gradeFor, SEVERITY_ORDER, type Finding, type Grade, type Score } from '
 import { scoreDomain, type DomainAuditData } from './domainScore';
 import { isHttpHeadersInconclusive, scoreHttpHeaders, type HttpHeadersData } from './httpHeadersScore';
 import { heText, type HeText } from './reportHe';
-import { hasAssessedInternalControls, scoreInternalAudit, type InternalAuditData } from './internalAudit';
+import { hasAssessedInternalControls, isInternalAuditComplete, scoreInternalAudit, type InternalAuditData } from './internalAudit';
 
 export interface ReportInput {
   clientName: string;
@@ -25,6 +25,7 @@ export interface ReportFinding {
 export interface ReportSection {
   key: 'email' | 'web' | 'internal';
   score: Score;
+  includedInOverall: boolean;
 }
 
 export interface Report {
@@ -52,17 +53,24 @@ function byPriority(a: ReportFinding, b: ReportFinding): number {
 export function buildReport(input: ReportInput): Report | null {
   const sections: ReportSection[] = [];
   const webInconclusive = !!input.httpHeaders && isHttpHeadersInconclusive(input.httpHeaders);
-  if (input.domainAudit) sections.push({ key: 'email', score: scoreDomain(input.domainAudit) });
-  if (input.httpHeaders && !webInconclusive) sections.push({ key: 'web', score: scoreHttpHeaders(input.httpHeaders) });
-  if (input.internalAudit && hasAssessedInternalControls(input.internalAudit)) sections.push({ key: 'internal', score: scoreInternalAudit(input.internalAudit) });
+  if (input.domainAudit) sections.push({ key: 'email', score: scoreDomain(input.domainAudit), includedInOverall: true });
+  if (input.httpHeaders && !webInconclusive) sections.push({ key: 'web', score: scoreHttpHeaders(input.httpHeaders), includedInOverall: true });
+  if (input.internalAudit && hasAssessedInternalControls(input.internalAudit)) {
+    sections.push({
+      key: 'internal',
+      score: scoreInternalAudit(input.internalAudit),
+      includedInOverall: isInternalAuditComplete(input.internalAudit),
+    });
+  }
   if (!input.domainAudit && !input.httpHeaders && !hasAssessedInternalControls(input.internalAudit)) return null;
 
   const all: ReportFinding[] = sections.flatMap((s) => s.score.findings.map((finding) => ({ finding, he: heText(finding), section: s.key })));
   const problems = all.filter((r) => r.finding.severity !== 'ok').sort(byPriority);
   const good = all.filter((r) => r.finding.severity === 'ok');
 
-  const score = sections.length > 0
-    ? Math.round(sections.reduce((sum, s) => sum + s.score.score, 0) / sections.length)
+  const scoredSections = sections.filter((s) => s.includedInOverall);
+  const score = scoredSections.length > 0
+    ? Math.round(scoredSections.reduce((sum, s) => sum + s.score.score, 0) / scoredSections.length)
     : null;
 
   return {
