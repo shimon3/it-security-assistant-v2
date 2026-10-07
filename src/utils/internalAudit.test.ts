@@ -37,7 +37,7 @@ describe('internal SMB audit scoring', () => {
     d.answers.backups = 'no';
 
     const s = scoreInternalAudit(d);
-    expect(s.score).toBe(48); // weighted score is 52, but missing backups caps the score at 74; 14/(14+13)=51.85
+    expect(s.score).toBe(52); // 14/(14+13)=51.85; the 74-point backup cap does not lower an already-lower score
     expect(s.findings.map((f) => f.id)).toEqual(expect.arrayContaining(['internal-mfa-ok', 'internal-backups-no']));
   });
 
