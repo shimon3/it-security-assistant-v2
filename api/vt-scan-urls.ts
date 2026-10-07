@@ -3,9 +3,7 @@ import { checkUrl, type VTUrlResult } from './_lib/virustotal';
 
 export const config = { runtime: 'edge' };
 
-const MAX_URLS = 5;
-
-const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+const MAX_URLS = 3;
 
 export default async function handler(req: Request): Promise<Response> {
   const blocked = await guard(req, 'vt-scan-urls');
@@ -25,7 +23,7 @@ export default async function handler(req: Request): Promise<Response> {
   if (urls.some((u) => typeof u !== 'string' || u.trim() === '')) {
     return json(400, { error: 'Invalid field: urls must contain non-empty strings only' });
   }
-  const clean = (urls as string[]).map((u) => u.trim());
+  const clean = [...new Set((urls as string[]).map((u) => u.trim()))].slice(0, MAX_URLS);
   if (clean.some((u) => u.length > 2048)) return json(400, { error: 'URL too long' });
   if (clean.some((u) => !/^https?:\/\//i.test(u))) {
     return json(400, { error: 'Invalid URL — must start with http:// or https://' });
@@ -35,7 +33,6 @@ export default async function handler(req: Request): Promise<Response> {
   for (let i = 0; i < clean.length; i++) {
     const { body: result } = await checkUrl(clean[i], apiKey);
     results.push(result);
-    if (i < clean.length - 1) await sleep(250);
   }
 
   // Per-URL errors are reported inside each result; the batch itself succeeded.
