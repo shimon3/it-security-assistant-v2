@@ -38,7 +38,7 @@ export default function App() {
 
   function startDemo() {
     setDemoMode(true);
-    updateSession({ domain: DEMO_DOMAIN, clientName: 'Example Shop Ltd', domainAudit: null, httpHeaders: null, internalAudit: null });
+    updateSession({ domain: DEMO_DOMAIN, clientName: 'Example Shop Ltd', domainAudit: null, httpHeaders: null, internalAudit: null, clientEnvironment: null });
     setActiveTool('domainaudit');
     setInApp(true);
   }
