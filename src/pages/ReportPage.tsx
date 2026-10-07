@@ -402,7 +402,7 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
               {input.httpHeaders.https.chain.map((h) => <p key={h.url} className="break-all">{h.status} {h.url}</p>)}
               {input.httpHeaders.https.error && <p>HTTPS: {input.httpHeaders.https.error}</p>}
               {Object.entries(input.httpHeaders.https.headers).map(([k, v]) => <p key={k} className="break-all">{k}: {v}</p>)}
-              {Object.keys(input.httpHeaders.https.headers).length === 0 && <p>No security headers detected.</p>}
+              {Object.keys(input.httpHeaders.https.headers).length === 0 && <p>{isHttpHeadersInconclusive(input.httpHeaders) ? 'Security headers: not evaluated.' : 'No security headers detected.'}</p>}
             </div>
           )}
         </div>
