@@ -7,6 +7,7 @@ import { findingsText } from '../utils/findingsStyle';
 import { apiPost, apiErrorOf, errorMessage } from '../utils/apiClient';
 import { scoreDomain, type DomainAuditData } from '../utils/domainScore';
 import { updateSession, useAuditSession } from '../utils/auditSession';
+import { useLanguage } from '../i18n';
 
 function rawLines(data: DomainAuditData): string[] {
   return [
@@ -24,6 +25,7 @@ export default function DomainAuditPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showRaw, setShowRaw] = useState(false);
+  const { t } = useLanguage();
 
   const data = session.domainAudit;
   const score = data ? scoreDomain(data) : null;
@@ -35,9 +37,9 @@ export default function DomainAuditPage() {
     try {
       const res = await apiPost<DomainAuditData>('/api/domain-audit', { domain });
       if (res.ok && res.data && 'mx' in res.data) updateSession({ domainAudit: res.data, domain: res.data.domain });
-      else setError(apiErrorOf(res) ?? 'The audit did not finish. Try again.');
+      else setError(apiErrorOf(res) ?? t('auditFailed'));
     } catch (err) {
-      setError(errorMessage(err, 'Could not reach the server. Check your connection and try again.'));
+      setError(errorMessage(err, t('serverFailed')));
     } finally {
       setLoading(false);
     }
@@ -47,8 +49,8 @@ export default function DomainAuditPage() {
     <div className="min-h-screen bg-canvas text-ink">
       <PageHeader
         icon={<MailCheck className="w-5 h-5" />}
-        title="Domain email security"
-        description="Can someone send email in this company’s name? Checks SPF, DMARC, DKIM and more in public DNS."
+        title={t('auditDomainTitle')}
+        description={t('auditDomainDesc')}
       />
 
       <div className="max-w-2xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
@@ -57,8 +59,8 @@ export default function DomainAuditPage() {
           initialValue={session.domain}
           loading={loading}
           error={error}
-          hint="Reads public DNS records only. Available in audit mode."
-          buttonLabel="Audit"
+          hint={t('auditDomainHint')}
+          buttonLabel={t('audit')}
           onSubmit={handleAudit}
         />
 
@@ -66,7 +68,7 @@ export default function DomainAuditPage() {
           <div className="space-y-4 animate-fade-in">
             {!data.exists && (
               <p className="rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
-                This domain does not seem to exist. Check the spelling.
+                {t('domainMissing')}
               </p>
             )}
 
@@ -83,7 +85,7 @@ export default function DomainAuditPage() {
                 className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium text-ink-2"
                 aria-expanded={showRaw}
               >
-                Raw DNS records
+                {t('rawDns')}
                 <ChevronDown className={`w-4 h-4 transition-transform ${showRaw ? 'rotate-180' : ''}`} />
               </button>
               {showRaw && (
