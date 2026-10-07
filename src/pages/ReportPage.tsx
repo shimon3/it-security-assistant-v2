@@ -285,7 +285,13 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
           <div className="ms-auto flex gap-6">
             {sections.map((s) => (
               <div key={s.key} className="text-center">
-                <GradeBadge grade={s.score.grade} size="sm" />
+                {s.includedInOverall ? (
+                  <GradeBadge grade={s.score.grade} size="sm" />
+                ) : (
+                  <div className="flex h-11 min-w-11 items-center justify-center rounded-xl border-2 border-slate-300 bg-slate-50 px-2 text-[11px] font-bold text-slate-700">
+                    בתהליך
+                  </div>
+                )}
                 <p className="text-xs text-muted mt-1.5 max-w-[7rem]">{SECTION_HE[s.key]}</p>
               </div>
             ))}
@@ -297,6 +303,12 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
             )}
           </div>
         </div>
+        {sections.some((s) => s.key === 'internal' && !s.includedInOverall) && (
+          <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 px-5 py-4 text-slate-800">
+            <p className="font-semibold">שאלון האבטחה הפנימי עדיין בתהליך</p>
+            <p className="mt-1 text-sm">הממצאים שכבר נבדקו מופיעים בדוח, אך הציון הפנימי אינו נכלל בציון הכולל עד שכל הבקרות נבדקו או סומנו כלא רלוונטיות.</p>
+          </div>
+        )}
         {webInconclusive && (
           <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-amber-900">
             <p className="font-semibold">בדיקת האתר לא הושלמה</p>
