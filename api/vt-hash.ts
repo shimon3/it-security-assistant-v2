@@ -1,80 +1,40 @@
+import { guard, json, readJson } from './_lib/http';
+import { VT_API_BASE, statsToStatus } from './_lib/virustotal';
+
 export const config = { runtime: 'edge' };
 
-const VT_API_BASE = 'https://www.virustotal.com/api/v3';
-const CORS_ORIGIN = 'https://it-security-assistant-v2.vercel.app';
+type HashStatus = 'clean' | 'suspicious' | 'malicious' | 'not_found' | 'error';
+
+const empty = (hash: string, status: HashStatus, errorMessage: string) => ({
+  hash, fileName: null, fileType: null,
+  malicious: 0, suspicious: 0, harmless: 0, undetected: 0, total: 0, status, threatNames: [] as string[], errorMessage,
+});
 
 export default async function handler(req: Request): Promise<Response> {
-  if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
-    });
-  }
+  const blocked = await guard(req, 'vt-hash');
+  if (blocked) return blocked;
 
   const apiKey = process.env.VIRUSTOTAL_API_KEY;
-  if (!apiKey) {
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
-    });
-  }
+  if (!apiKey) return json(500, { error: 'Server misconfigured: VIRUSTOTAL_API_KEY is not set' });
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
-    });
-  }
+  const body = await readJson(req);
+  if (!body) return json(400, { error: 'Invalid JSON body' });
 
-  const hash = (body as Record<string, unknown>)?.hash;
-  if (typeof hash !== 'string' || hash.trim() === '') {
-    return new Response(JSON.stringify({ error: 'Missing or invalid field: hash' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
-    });
-  }
-
-  const cleanHash = hash.trim();
-  if (!/^[a-fA-F0-9]{32}$|^[a-fA-F0-9]{40}$|^[a-fA-F0-9]{64}$/.test(cleanHash)) {
-    return new Response(JSON.stringify({ error: 'Invalid hash — must be MD5 (32), SHA-1 (40) or SHA-256 (64) hex' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
-    });
+  const hash = typeof body.hash === 'string' ? body.hash.trim() : '';
+  if (!hash) return json(400, { error: 'Missing or invalid field: hash' });
+  if (!/^(?:[a-fA-F0-9]{32}|[a-fA-F0-9]{40}|[a-fA-F0-9]{64})$/.test(hash)) {
+    return json(400, { error: 'Invalid hash — must be MD5 (32), SHA-1 (40) or SHA-256 (64) hex' });
   }
 
   try {
-    const res = await fetch(`${VT_API_BASE}/files/${cleanHash}`, {
-      headers: { 'x-apikey': apiKey },
-    });
+    const res = await fetch(`${VT_API_BASE}/files/${hash}`, { headers: { 'x-apikey': apiKey } });
 
-    if (res.status === 404) {
-      const result = { hash, fileName: null, fileType: null, malicious: 0, suspicious: 0, harmless: 0, undetected: 0, total: 0, status: 'not_found', threatNames: [], errorMessage: 'Hash not found in VirusTotal database' };
-      return new Response(JSON.stringify(result), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
-      });
-    }
+    // "Not found" is a normal answer for an unknown file, not a failure.
+    if (res.status === 404) return json(200, empty(hash, 'not_found', 'Hash not found in VirusTotal database'));
+    if (res.status === 429) return json(429, empty(hash, 'error', 'VirusTotal rate limit reached (4 req/min on free tier)'));
+    if (!res.ok) return json(502, empty(hash, 'error', `VirusTotal error ${res.status}`));
 
-    if (res.status === 429) {
-      const result = { hash, fileName: null, fileType: null, malicious: 0, suspicious: 0, harmless: 0, undetected: 0, total: 0, status: 'error', threatNames: [], errorMessage: 'Rate limit reached (4 req/min on free tier)' };
-      return new Response(JSON.stringify(result), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
-      });
-    }
-
-    if (!res.ok) {
-      const result = { hash, fileName: null, fileType: null, malicious: 0, suspicious: 0, harmless: 0, undetected: 0, total: 0, status: 'error', threatNames: [], errorMessage: `API error ${res.status}` };
-      return new Response(JSON.stringify(result), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
-      });
-    }
-
-    const data = await res.json() as {
+    const data = (await res.json()) as {
       data?: {
         attributes?: {
           last_analysis_stats?: Record<string, number>;
@@ -86,48 +46,29 @@ export default async function handler(req: Request): Promise<Response> {
         };
       };
     };
-
     const attrs = data?.data?.attributes ?? {};
-    const stats = attrs.last_analysis_stats ?? {};
+    const s = statsToStatus(attrs.last_analysis_stats ?? {});
+    const threatNames = [
+      ...new Set(
+        Object.values(attrs.last_analysis_results ?? {})
+          .filter((e) => e.category === 'malicious' && e.result)
+          .map((e) => e.result),
+      ),
+    ].slice(0, 5);
 
-    const malicious: number = stats.malicious ?? 0;
-    const suspicious: number = stats.suspicious ?? 0;
-    const harmless: number = stats.harmless ?? 0;
-    const undetected: number = stats.undetected ?? 0;
-    const total = malicious + suspicious + harmless + undetected;
-
-    const engines: Record<string, { category: string; result: string }> = attrs.last_analysis_results ?? {};
-    const threatNames = [...new Set(
-      Object.values(engines)
-        .filter((e) => e.category === 'malicious' && e.result)
-        .map((e) => e.result)
-    )].slice(0, 5);
-
-    let status: 'clean' | 'suspicious' | 'malicious' | 'not_found' | 'error' = 'clean';
-    if (malicious > 0) status = 'malicious';
-    else if (suspicious > 0) status = 'suspicious';
-
-    const result = {
+    return json(200, {
       hash,
       fileName: attrs.meaningful_name ?? attrs.names?.[0] ?? null,
       fileType: attrs.type_description ?? attrs.type_tag ?? null,
-      malicious,
-      suspicious,
-      harmless,
-      undetected,
-      total,
-      status,
+      malicious: s.malicious,
+      suspicious: s.suspicious,
+      harmless: s.harmless,
+      undetected: s.undetected,
+      total: s.total,
+      status: s.verdict,
       threatNames,
-    };
-    return new Response(JSON.stringify(result), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
     });
   } catch {
-    const result = { hash, fileName: null, fileType: null, malicious: 0, suspicious: 0, harmless: 0, undetected: 0, total: 0, status: 'error', threatNames: [], errorMessage: 'Network error' };
-    return new Response(JSON.stringify(result), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
-    });
+    return json(502, empty(hash, 'error', 'Could not reach VirusTotal'));
   }
 }

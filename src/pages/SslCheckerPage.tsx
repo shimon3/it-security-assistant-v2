@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ShieldCheck, Search, Loader2, RefreshCw } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
+import { apiPost, apiErrorOf, errorMessage } from '../utils/apiClient';
 
 interface SslResult {
   domain: string;
@@ -42,16 +43,11 @@ export default function SslCheckerPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/ssl-check', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ domain: trimmed }),
-      });
-      if (!res.ok) throw new Error('Network error');
-      const data: SslResult = await res.json();
-      setResult(data);
-    } catch {
-      setError('Check failed — verify your connection and try again.');
+      const res = await apiPost<SslResult>('/api/ssl-check', { domain: trimmed });
+      if (res.data && 'status' in res.data) setResult(res.data);
+      else setError(apiErrorOf(res) ?? 'Check failed — verify your connection and try again.');
+    } catch (err) {
+      setError(errorMessage(err, 'Check failed — verify your connection and try again.'));
     } finally {
       setLoading(false);
     }

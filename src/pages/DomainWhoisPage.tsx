@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Shield, Search, Loader2 } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
+import { apiPost, apiErrorOf, errorMessage } from '../utils/apiClient';
 import { VTVerdictCard, VTEngineBreakdown } from '../components/VTVerdict';
 
 interface DomainResult {
@@ -44,16 +45,11 @@ export default function DomainWhoisPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/vt-domain', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ domain }),
-      });
-      if (!res.ok) throw new Error('Network response was not ok');
-      const data: DomainResult = await res.json();
-      setResult(data);
-    } catch {
-      setError('Lookup failed — check your connection and try again.');
+      const res = await apiPost<DomainResult>('/api/vt-domain', { domain });
+      if (res.data && 'status' in res.data) setResult(res.data);
+      else setError(apiErrorOf(res) ?? 'Lookup failed — check your connection and try again.');
+    } catch (err) {
+      setError(errorMessage(err, 'Lookup failed — check your connection and try again.'));
     } finally {
       setLoading(false);
     }

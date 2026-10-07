@@ -1,6 +1,10 @@
+import { guard, json, readJson } from './_lib/http';
+import { normalizeDomain } from './_lib/domain';
+
 export const config = { runtime: 'edge' };
 
-const CORS_ORIGIN = 'https://it-security-assistant-v2.vercel.app';
+// Qualys SSL Labs: commercial use is not allowed without Qualys' permission.
+// Personal use only — this tool is hidden in audit mode.
 
 interface SslResult {
   domain: string;
@@ -12,39 +16,22 @@ interface SslResult {
   errorMessage?: string;
 }
 
-function respond(status: number, body: unknown): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
-  });
-}
+const respond = json;
 
 export default async function handler(req: Request): Promise<Response> {
-  if (req.method !== 'POST') {
-    return respond(405, { error: 'Method not allowed' });
-  }
+  const blocked = await guard(req, 'ssl-check');
+  if (blocked) return blocked;
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return respond(400, { error: 'Invalid JSON body' });
-  }
+  const body = await readJson(req);
+  if (!body) return respond(400, { error: 'Invalid JSON body' });
 
-  const raw = (body as Record<string, unknown>)?.domain;
+  const raw = body.domain;
   if (typeof raw !== 'string' || !raw.trim()) {
     return respond(400, { error: 'Missing field: domain' });
   }
 
-  const domain = raw.trim()
-    .replace(/^https?:\/\//i, '')
-    .split('/')[0]
-    .split(':')[0]
-    .toLowerCase();
-
-  if (domain.length > 253 || !/^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/.test(domain)) {
-    return respond(400, { error: 'Invalid domain format' });
-  }
+  const domain = normalizeDomain(raw);
+  if (!domain) return respond(400, { error: 'Invalid domain format' });
 
   try {
     const res = await fetch(
@@ -57,7 +44,7 @@ export default async function handler(req: Request): Promise<Response> {
         domain, status: 'error', grade: null, expiryDate: null, daysRemaining: null, issuer: null,
         errorMessage: 'Too many requests — try again in a moment',
       };
-      return respond(200, result);
+      return respond(429, result);
     }
 
     if (!res.ok) {
@@ -65,7 +52,7 @@ export default async function handler(req: Request): Promise<Response> {
         domain, status: 'error', grade: null, expiryDate: null, daysRemaining: null, issuer: null,
         errorMessage: 'Analysis unavailable — try again later',
       };
-      return respond(200, result);
+      return respond(502, result);
     }
 
     const data = await res.json() as {
@@ -104,8 +91,8 @@ export default async function handler(req: Request): Promise<Response> {
   } catch {
     const result: SslResult = {
       domain, status: 'error', grade: null, expiryDate: null, daysRemaining: null, issuer: null,
-      errorMessage: 'Could not reach SSL Labs — check your connection',
+      errorMessage: 'Could not reach SSL Labs',
     };
-    return respond(200, result);
+    return respond(502, result);
   }
 }

@@ -13,12 +13,21 @@ import SslCheckerPage from './pages/SslCheckerPage';
 import HeaderAnalyzerPage from './pages/HeaderAnalyzerPage';
 import QrScannerPage from './pages/QrScannerPage';
 import Sidebar, { Tool } from './components/Sidebar';
+import TokenPrompt from './components/TokenPrompt';
+import { AUTH_REQUIRED_EVENT } from './utils/apiClient';
 
 export default function App() {
   const [inApp, setInApp] = useState(false);
   const [activeTool, setActiveTool] = useState<Tool>('email');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [qrUrl, setQrUrl] = useState('');
+  const [askToken, setAskToken] = useState(false);
+
+  useEffect(() => {
+    const onAuthRequired = () => setAskToken(true);
+    window.addEventListener(AUTH_REQUIRED_EVENT, onAuthRequired);
+    return () => window.removeEventListener(AUTH_REQUIRED_EVENT, onAuthRequired);
+  }, []);
 
   useEffect(() => {
     function handleQrUrl(e: Event) {
@@ -37,6 +46,7 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen bg-slate-950">
+      {askToken && <TokenPrompt onClose={() => setAskToken(false)} />}
       {/* Mobile backdrop */}
       {sidebarOpen && (
         <div

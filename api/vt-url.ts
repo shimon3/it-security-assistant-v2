@@ -1,131 +1,23 @@
+import { guard, json, readJson } from './_lib/http';
+import { checkUrl } from './_lib/virustotal';
+
 export const config = { runtime: 'edge' };
 
-const VT_API_BASE = 'https://www.virustotal.com/api/v3';
-const CORS_ORIGIN = 'https://it-security-assistant-v2.vercel.app';
-
-function getUrlId(url: string): string {
-  return btoa(url).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-}
-
 export default async function handler(req: Request): Promise<Response> {
-  if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
-    });
-  }
+  const blocked = await guard(req, 'vt-url');
+  if (blocked) return blocked;
 
   const apiKey = process.env.VIRUSTOTAL_API_KEY;
-  if (!apiKey) {
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
-    });
-  }
+  if (!apiKey) return json(500, { error: 'Server misconfigured: VIRUSTOTAL_API_KEY is not set' });
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
-    });
-  }
+  const body = await readJson(req);
+  if (!body) return json(400, { error: 'Invalid JSON body' });
 
-  const url = (body as Record<string, unknown>)?.url;
-  if (typeof url !== 'string' || url.trim() === '') {
-    return new Response(JSON.stringify({ error: 'Missing or invalid field: url' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
-    });
-  }
+  const url = typeof body.url === 'string' ? body.url.trim() : '';
+  if (!url) return json(400, { error: 'Missing or invalid field: url' });
+  if (url.length > 2048) return json(400, { error: 'Input too long' });
+  if (!/^https?:\/\//i.test(url)) return json(400, { error: 'Invalid URL — must start with http:// or https://' });
 
-  if (url.trim().length > 2048) {
-    return new Response(JSON.stringify({ error: 'Input too long' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
-    });
-  }
-
-  if (!/^https?:\/\//i.test(url.trim())) {
-    return new Response(JSON.stringify({ error: 'Invalid URL — must start with http:// or https://' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
-    });
-  }
-
-  const id = getUrlId(url);
-
-  try {
-    const res = await fetch(`${VT_API_BASE}/urls/${id}`, {
-      headers: { 'x-apikey': apiKey },
-    });
-
-    if (res.status === 404) {
-      // URL not in VT database yet — submit it for scanning
-      const formData = new URLSearchParams();
-      formData.append('url', url);
-      const submitRes = await fetch(`${VT_API_BASE}/urls`, {
-        method: 'POST',
-        headers: {
-          'x-apikey': apiKey,
-          'content-type': 'application/x-www-form-urlencoded',
-        },
-        body: formData.toString(),
-      });
-      if (!submitRes.ok) {
-        const result = { url, malicious: 0, suspicious: 0, harmless: 0, undetected: 0, total: 0, status: 'unknown', errorMessage: 'Submitted for scan' };
-        return new Response(JSON.stringify(result), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
-        });
-      }
-      const result = { url, malicious: 0, suspicious: 0, harmless: 0, undetected: 0, total: 0, status: 'unknown', errorMessage: 'First scan submitted — retry later' };
-      return new Response(JSON.stringify(result), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
-      });
-    }
-
-    if (res.status === 429) {
-      const result = { url, malicious: 0, suspicious: 0, harmless: 0, undetected: 0, total: 0, status: 'error', errorMessage: 'Rate limit reached (4 req/min on free tier)' };
-      return new Response(JSON.stringify(result), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
-      });
-    }
-
-    if (!res.ok) {
-      const result = { url, malicious: 0, suspicious: 0, harmless: 0, undetected: 0, total: 0, status: 'error', errorMessage: `API error ${res.status}` };
-      return new Response(JSON.stringify(result), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
-      });
-    }
-
-    const data = await res.json() as { data?: { attributes?: { last_analysis_stats?: Record<string, number> } } };
-    const stats = data?.data?.attributes?.last_analysis_stats ?? {};
-    const malicious: number = stats.malicious ?? 0;
-    const suspicious: number = stats.suspicious ?? 0;
-    const harmless: number = stats.harmless ?? 0;
-    const undetected: number = stats.undetected ?? 0;
-    const total = malicious + suspicious + harmless + undetected;
-
-    let status: 'clean' | 'suspicious' | 'malicious' | 'unknown' | 'error' = 'clean';
-    if (malicious > 0) status = 'malicious';
-    else if (suspicious > 0) status = 'suspicious';
-
-    const result = { url, malicious, suspicious, harmless, undetected, total, status };
-    return new Response(JSON.stringify(result), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
-    });
-  } catch {
-    const result = { url, malicious: 0, suspicious: 0, harmless: 0, undetected: 0, total: 0, status: 'error', errorMessage: 'Network error' };
-    return new Response(JSON.stringify(result), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN },
-    });
-  }
+  const result = await checkUrl(url, apiKey);
+  return json(result.httpStatus, result.body);
 }
