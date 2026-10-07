@@ -14,6 +14,7 @@ const ROWS: Row[] = [
   { tool: 'Email analysis', sentTo: 'Nowhere — runs in the browser', data: '—', kept: 'Last 5 analyses in this browser (personal mode only)', audit: 'allowed' },
   { tool: 'Email analysis → link scan', sentTo: 'VirusTotal (via /api/vt-scan-urls)', data: 'Up to 5 suspicious links', kept: 'VirusTotal keeps submitted URLs', audit: 'hidden' },
   { tool: 'Domain email security', sentTo: 'Cloudflare public DNS (via /api/domain-audit)', data: 'The domain name and its DNS sub-names (_dmarc, DKIM selectors…)', kept: 'Nothing on our side', audit: 'allowed' },
+  { tool: 'Website security headers', sentTo: 'The company website itself (via /api/http-headers), and Cloudflare public DNS', data: 'One page request to the home page; only response headers are read', kept: 'Nothing on our side', audit: 'allowed' },
   { tool: 'Header analyzer', sentTo: 'Nowhere — runs in the browser', data: '—', kept: 'Nothing', audit: 'allowed' },
   { tool: 'Password strength', sentTo: 'Nowhere — runs in the browser', data: '—', kept: 'Nothing', audit: 'allowed' },
   { tool: 'Have I Been Pwned', sentTo: 'api.pwnedpasswords.com', data: 'First 5 characters of the password’s SHA-1 hash', kept: 'Nothing on our side', audit: 'allowed' },

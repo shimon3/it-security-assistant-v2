@@ -2,7 +2,7 @@
 
 export const DOH_URL = 'https://cloudflare-dns.com/dns-query';
 
-export const RR = { A: 1, CNAME: 5, MX: 15, TXT: 16 } as const;
+export const RR = { A: 1, CNAME: 5, MX: 15, TXT: 16, AAAA: 28 } as const;
 
 export interface DohAnswer {
   name: string;

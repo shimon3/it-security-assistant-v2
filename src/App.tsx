@@ -18,6 +18,7 @@ import { AUTH_REQUIRED_EVENT } from './utils/apiClient';
 import { isAuditMode, isPersonalOnly, useAuditMode } from './utils/auditMode';
 import PrivacyPage from './pages/PrivacyPage';
 import DomainAuditPage from './pages/DomainAuditPage';
+import HttpHeadersPage from './pages/HttpHeadersPage';
 
 export default function App() {
   const [inApp, setInApp] = useState(false);
@@ -100,6 +101,7 @@ export default function App() {
         {activeTool === 'qr'      && <QrScannerPage />}
         {activeTool === 'privacy' && <PrivacyPage />}
         {activeTool === 'domainaudit' && <DomainAuditPage />}
+        {activeTool === 'httpheaders' && <HttpHeadersPage />}
       </div>
     </div>
   );
