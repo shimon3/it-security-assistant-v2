@@ -39,3 +39,6 @@ V2 remains unchanged: the existing audit session is memory-only and clears when 
 - Threat-model file uploads, API authorization, retention, and role delegation before release.
 
 **Deployment gate:** Do not merge or publish until Auth/RLS are integration-tested with two identities. This SQL has not been executed yet.
+
+## SQL preflight added
+After applying `supabase/migrations/20261018_v3_foundation.sql` in a disposable Supabase instance, run `supabase/tests/v3_structure_preflight.sql` in its SQL editor. The script fails if tables lack RLS/forced RLS, the owner column is writable, anonymous users have table privileges, four authenticated CRUD policies are missing, or the client/tenant composite foreign key is absent. The preflight checks **database configuration only**; it does not demonstrate access isolation. Two-account behavioral tests remain a mandatory release gate.
