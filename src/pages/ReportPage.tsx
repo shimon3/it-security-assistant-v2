@@ -178,7 +178,8 @@ export default function ReportPage() {
             )}
             <button
               onClick={() => window.print()}
-              disabled={!report}
+              disabled={!report || !clientName.trim()}
+              title={!clientName.trim() ? "Enter a client name before printing the report" : undefined}
               className={`inline-flex items-center gap-2 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors disabled:opacity-40 ${
                 missing ? 'border border-line-strong bg-surface text-ink hover:border-brand' : 'bg-brand hover:bg-brand-strong text-white'
               }`}
@@ -188,6 +189,7 @@ export default function ReportPage() {
             </button>
           </div>
           {error && <p className="text-sm text-red-700" role="alert">{error}</p>}
+          {!clientName.trim() && <p className="text-sm text-amber-800" role="status">Enter the client name before printing a client report.</p>}
           <p className="text-xs text-muted">
             {domainAudit ? `✓ ${t('emailIncluded')}` : `– ${t('emailNotRun')}`} · {httpHeaders ? (webInconclusive ? `– ${t('webInconclusive')}` : `✓ ${t('webIncluded')}`) : `– ${t('webNotRun')}`}.
             {t('savePdfHint')}
