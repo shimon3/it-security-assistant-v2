@@ -42,3 +42,8 @@ V2 remains unchanged: the existing audit session is memory-only and clears when 
 
 ## SQL preflight added
 After applying `supabase/migrations/20261018_v3_foundation.sql` in a disposable Supabase instance, run `supabase/tests/v3_structure_preflight.sql` in its SQL editor. The script fails if tables lack RLS/forced RLS, the owner column is writable, anonymous users have table privileges, four authenticated CRUD policies are missing, or the client/tenant composite foreign key is absent. The preflight checks **database configuration only**; it does not demonstrate access isolation. Two-account behavioral tests remain a mandatory release gate.
+
+## Two-user RLS smoke test (added)
+Run `supabase/tests/v3_two_user_rls_smoke.sql` **only in a disposable test project**, after applying the migration. Replace BOTH test-user UUID placeholders with UUIDs of existing disposable Supabase Auth test users. The test impersonates the `authenticated` role, creates a tenant/client/audit for account A, confirms account B cannot read, edit or delete them or insert a cross-tenant audit, and checks A can still read its record. All inserts are rolled back. Do not use real customer accounts or production projects.
+
+This test is source-controlled but **has not been executed against a database**. Before release, also run browser/API integration tests with two real login sessions (including logout/token refresh). The SQL editor uses elevated privileges until `SET ROLE authenticated` and therefore cannot replace an end-to-end test.
