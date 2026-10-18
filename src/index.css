@@ -103,4 +103,18 @@
   .print-area h2 {
     break-after: avoid;
   }
+  .print-area thead {
+    display: table-header-group;
+  }
+  .print-area tr, .print-area li {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .print-area section {
+    orphans: 3;
+    widows: 3;
+  }
+  .print-area .print\:break-inside-avoid {
+    break-inside: avoid;
+  }
 }
