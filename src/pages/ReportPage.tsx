@@ -12,6 +12,7 @@ import { buildReport, formatDateHe, type Report, type ReportFinding } from '../u
 import { EFFORT_HE, OWNER_HE, SEVERITY_HE } from '../utils/reportHe';
 import { SEVERITY_STYLE } from '../utils/findingsStyle';
 import { useLanguage } from '../i18n';
+import { printableInternalControls } from '../utils/printableInternalControls';
 
 const PROFILE_KEY = 'itsa_consultant_profile';
 
@@ -570,7 +571,7 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
               <p className="font-sans font-semibold text-ink text-xs mb-2" dir="rtl">בקרות אבטחה פנימיות — {internalCoverage?.assessed ?? 0} מתוך {INTERNAL_CONTROLS.length} נבדקו</p>
               <p className="font-sans text-[11px] text-muted mb-2" dir="rtl">מפורטות הבקרות שנענו בלבד. בקרות שטרם נבדקו אינן נחשבות לתקינות.</p>
               <div dir="rtl" className="text-right font-sans space-y-1.5">
-                {INTERNAL_CONTROLS.filter(control => (input.internalAudit?.answers?.[control.id] ?? 'unknown') !== 'unknown').map(control => {
+                {printableInternalControls(input.internalAudit).map(control => {
                   const answer = input.internalAudit?.answers?.[control.id] ?? 'unknown';
                   const evidence = input.internalAudit?.evidence?.[control.id] ?? 'unverified';
                   const observation = input.internalAudit?.observations?.[control.id] ?? '';
