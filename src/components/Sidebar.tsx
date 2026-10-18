@@ -15,7 +15,7 @@ interface SidebarProps {
 }
 
 const TOOL_KEY: Record<Tool, Parameters<ReturnType<typeof useLanguage>['t']>[0]> = {
-  domainaudit: 'toolDomainAudit', httpheaders: 'toolHttpHeaders', email: 'toolEmail',
+  domainaudit: 'toolDomainAudit', httpheaders: 'toolHttpHeaders', internalaudit: 'toolInternalAudit', email: 'toolEmail',
   headers: 'toolHeaders', hibp: 'toolHibp', password: 'toolPassword', report: 'toolReport',
   qr: 'toolQr', encoder: 'toolEncoder', url: 'toolUrl', hash: 'toolHash', ip: 'toolIp',
   domain: 'toolDomain', ssl: 'toolSsl', privacy: 'privacy',

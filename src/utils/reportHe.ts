@@ -13,7 +13,7 @@ export interface HeText {
   fix: string;
   effort: Effort;
   /** Who usually makes the change. */
-  owner: 'email' | 'web' | 'dns';
+  owner: 'email' | 'web' | 'dns' | 'it';
 }
 
 export const SEVERITY_HE: Record<Severity, string> = {
@@ -34,6 +34,7 @@ export const OWNER_HE: Record<HeText['owner'], string> = {
   email: 'מנהל הדואר (Google / Microsoft 365)',
   web: 'ספק האחסון או בונה האתר',
   dns: 'מי שמנהל את ה-DNS של הדומיין',
+  it: 'אחראי ה-IT / ספק המחשוב',
 };
 
 type Params = Record<string, string | number>;
@@ -235,5 +236,18 @@ export function hasHebrew(id: string): boolean {
 export function heText(f: Finding): HeText {
   const make = T[f.id];
   if (make) return make(f.params ?? {});
+
+  if (f.id.startsWith('internal-')) {
+    const p = f.params ?? {};
+    const effort = p.effort === 'easy' || p.effort === 'hard' ? p.effort : 'medium';
+    return {
+      title: typeof p.heTitle === 'string' ? p.heTitle : f.title,
+      impact: typeof p.heImpact === 'string' ? p.heImpact : f.impact,
+      fix: typeof p.heFix === 'string' ? p.heFix : f.recommendation,
+      effort,
+      owner: 'it',
+    };
+  }
+
   return { title: f.title, impact: f.impact, fix: f.recommendation, effort: 'medium', owner: 'web' };
 }
