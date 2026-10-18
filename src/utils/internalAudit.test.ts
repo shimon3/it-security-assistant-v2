@@ -7,9 +7,41 @@ import {
   internalScoreCaps,
   isInternalAuditComplete,
   scoreInternalAudit,
+  internalAuditCoverage,
 } from './internalAudit';
 
 describe('internal SMB audit scoring', () => {
+  it('shows an incomplete scope when only one control is assessed', () => {
+    const d = emptyInternalAudit();
+    d.answers.mfa = 'yes';
+    const coverage = internalAuditCoverage(d);
+    expect(coverage.assessed).toBe(1);
+    expect(coverage.applicable).toBe(20);
+    expect(coverage.assessmentPercent).toBe(5);
+    expect(coverage.verifiedPercent).toBe(0);
+    expect(coverage.complete).toBe(false);
+  });
+
+  it('reports verified evidence separately from self-reported compliance', () => {
+    const d = emptyInternalAudit();
+    for (const c of INTERNAL_CONTROLS) d.answers[c.id] = 'yes';
+    d.evidence.mfa = 'verified';
+    const coverage = internalAuditCoverage(d);
+    expect(coverage.complete).toBe(true);
+    expect(coverage.verified).toBe(1);
+    expect(coverage.verifiedPercent).toBe(5);
+    expect(scoreInternalAudit(d).score).toBe(100);
+  });
+
+  it('excludes N/A controls but never considers an all-N/A audit complete', () => {
+    const d = emptyInternalAudit();
+    for (const c of INTERNAL_CONTROLS) d.answers[c.id] = 'na';
+    const coverage = internalAuditCoverage(d);
+    expect(coverage.applicable).toBe(0);
+    expect(coverage.complete).toBe(false);
+    expect(coverage.assessmentPercent).toBe(0);
+  });
+
   it('organizes controls into the expected audit categories', () => {
     expect(INTERNAL_CATEGORIES.map((c) => c.id)).toEqual([
       'identity',
