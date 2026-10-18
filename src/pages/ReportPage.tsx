@@ -6,7 +6,7 @@ import { apiPost, apiErrorOf, errorMessage } from '../utils/apiClient';
 import { updateSession, useAuditSession } from '../utils/auditSession';
 import type { DomainAuditData } from '../utils/domainScore';
 import { isHttpHeadersInconclusive, type HttpHeadersData } from '../utils/httpHeadersScore';
-import { hasAssessedInternalControls, internalScoreCaps, isInternalAuditComplete, type EvidenceStatus } from '../utils/internalAudit';
+import { hasAssessedInternalControls, internalAuditCoverage, internalScoreCaps, isInternalAuditComplete, type EvidenceStatus } from '../utils/internalAudit';
 import { emailPlatformLabelHe, hasClientEnvironment, presenceLabelHe } from '../utils/clientEnvironment';
 import { buildReport, formatDateHe, type Report, type ReportFinding } from '../utils/report';
 import { EFFORT_HE, OWNER_HE, SEVERITY_HE } from '../utils/reportHe';
@@ -241,6 +241,7 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
   const { input, overall, webInconclusive, sections, problems, good, topRisks, thisWeek, remediationPlan } = report;
   const client = input.clientName.trim() || input.domain;
   const internalCaps = input.internalAudit ? internalScoreCaps(input.internalAudit) : [];
+  const internalCoverage = input.internalAudit ? internalAuditCoverage(input.internalAudit) : null;
 
   return (
     <article
@@ -420,6 +421,28 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
           </div>
         </div>
       </section>
+
+      {internalCoverage && (
+        <section className="py-5 border-b border-line break-inside-avoid" aria-label="היקף ואימות הבקרות">
+          <h2 className="text-lg font-bold mb-2">היקף ואימות הבקרות הפנימיות</h2>
+          <p className="text-sm text-ink-2">
+            נבדקו {internalCoverage.assessed} מתוך {internalCoverage.applicable} בקרות רלוונטיות
+            ({internalCoverage.assessmentPercent}%).
+            {' '}אומתו באופן עצמאי {internalCoverage.verified} מתוך {internalCoverage.assessed} הבקרות שנבדקו
+            ({internalCoverage.verifiedPercent}%).
+          </p>
+          {!internalCoverage.complete && (
+            <p className="mt-2 text-sm font-medium text-amber-800">
+              הבדיקה הפנימית חלקית. הציון הפנימי מבוסס רק על הבקרות שנענו ואינו נכלל בציון הכולל.
+            </p>
+          )}
+          {internalCoverage.complete && internalCoverage.verified < internalCoverage.assessed && (
+            <p className="mt-2 text-sm font-medium text-amber-800">
+              חלק מהתשובות מבוססות על דיווח ולא על אימות עצמאי. הציון אינו מהווה הוכחת אבטחה.
+            </p>
+          )}
+        </section>
+      )}
 
       {/* Findings table */}
       {problems.length > 0 && (
