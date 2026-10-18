@@ -39,6 +39,7 @@ describe('internal SMB audit scoring', () => {
     const coverage = internalAuditCoverage(d);
     expect(coverage.applicable).toBe(0);
     expect(coverage.complete).toBe(false);
+    expect(isInternalAuditComplete(d)).toBe(false);
     expect(coverage.assessmentPercent).toBe(0);
   });
 
