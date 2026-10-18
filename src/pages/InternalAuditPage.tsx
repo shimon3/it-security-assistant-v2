@@ -9,7 +9,7 @@ import {
   hasAssessedInternalControls,
   scoreInternalAudit,
   internalAuditCoverage,
-  isInternalAuditComplete,
+  withInternalAnswer,
   internalScoreCaps,
   type InternalAnswer,
   type InternalAuditData,
@@ -51,12 +51,7 @@ export default function InternalAuditPage() {
   }
 
   function updateAnswer(id: InternalControlId, answer: InternalAnswer) {
-    const next: InternalAuditData = {
-      ...data,
-      answers: { ...data.answers, [id]: answer },
-    };
-    next.completedAt = isInternalAuditComplete(next) ? new Date().toISOString() : null;
-    updateSession({ internalAudit: next });
+    updateSession({ internalAudit: withInternalAnswer(data, id, answer) });
   }
 
   function updateEvidence(id: InternalControlId, evidence: EvidenceStatus) {
