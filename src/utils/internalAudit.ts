@@ -316,7 +316,7 @@ export function hasAssessedInternalControls(data: InternalAuditData | null): boo
 
 export function isInternalAuditComplete(data: InternalAuditData | null): boolean {
   if (!data) return false;
-  return INTERNAL_CONTROLS.every((c) => answerOf(data, c.id) !== 'unknown');
+  return internalAuditCoverage(data).complete;
 }
 
 function findingFor(control: InternalControl, answer: Exclude<InternalAnswer, 'unknown' | 'na'>, observation: string): Finding {
