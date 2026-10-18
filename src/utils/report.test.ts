@@ -127,6 +127,32 @@ describe('buildReport', () => {
     expect(r.overall!.score).toBe(r.sections[0].score.score);
   });
 
+  it('excludes incomplete questionnaire even with an excellent partial score', () => {
+    const internalAudit = emptyInternalAudit();
+    internalAudit.answers.mfa = 'yes';
+    const r = buildReport({
+      ...base, domainAudit: null, httpHeaders: null, internalAudit,
+    })!;
+    expect(r.sections).toHaveLength(1);
+    expect(r.sections[0].score.score).toBe(100);
+    expect(r.sections[0].includedInOverall).toBe(false);
+    expect(r.overall).toBeNull();
+  });
+
+  it('includes a completed questionnaire with a legitimate N/A response', () => {
+    const internalAudit = emptyInternalAudit();
+    for (const c of Object.keys(internalAudit.answers) as Array<keyof typeof internalAudit.answers>) {
+      internalAudit.answers[c] = 'yes';
+    }
+    internalAudit.answers.mobileSecurity = 'na';
+    const r = buildReport({
+      ...base, domainAudit: null, httpHeaders: null, internalAudit,
+    })!;
+    expect(r.sections).toHaveLength(1);
+    expect(r.sections[0].includedInOverall).toBe(true);
+    expect(r.overall?.score).toBe(100);
+  });
+
   it('includes a completed internal questionnaire in the overall score', () => {
     const internalAudit = emptyInternalAudit();
     for (const key of Object.keys(internalAudit.answers) as Array<keyof typeof internalAudit.answers>) {
