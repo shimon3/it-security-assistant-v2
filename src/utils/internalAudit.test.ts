@@ -29,6 +29,23 @@ describe('internal SMB audit scoring', () => {
     expect(withInternalAnswer(d, 'mfa', 'yes').evidence.mfa).toBe('verified');
   });
 
+  it('clears completion when a completed audit is reopened', () => {
+    const d = emptyInternalAudit();
+    for (const c of INTERNAL_CONTROLS) d.answers[c.id] = 'yes';
+    d.completedAt = '2026-10-01T00:00:00.000Z';
+    const next = withInternalAnswer(d, 'mfa', 'unknown');
+    expect(next.completedAt).toBeNull();
+    expect(isInternalAuditComplete(next)).toBe(false);
+    expect(d.completedAt).toBe('2026-10-01T00:00:00.000Z');
+  });
+
+  it('does not change the completion timestamp when the response is unchanged', () => {
+    const d = emptyInternalAudit();
+    for (const c of INTERNAL_CONTROLS) d.answers[c.id] = 'yes';
+    d.completedAt = '2026-10-01T00:00:00.000Z';
+    expect(withInternalAnswer(d, 'mfa', 'yes').completedAt).toBe(d.completedAt);
+  });
+
   it('shows an incomplete scope when only one control is assessed', () => {
     const d = emptyInternalAudit();
     d.answers.mfa = 'yes';
