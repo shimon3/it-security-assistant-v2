@@ -451,7 +451,7 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
 
       {/* Findings table */}
       {problems.length > 0 && (
-        <section className="py-6 border-b border-line">
+        <section className={`py-6 border-b border-line ${problems.length <= 3 ? 'break-inside-avoid' : ''}`}>
           <h2 className="text-lg font-bold mb-3">הממצאים</h2>
           <table className="w-full text-[13px] border-collapse">
             <thead>
