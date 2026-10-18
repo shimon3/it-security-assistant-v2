@@ -309,6 +309,18 @@ export function internalAuditCoverage(data: InternalAuditData) {
   };
 }
 
+/** Changing a response invalidates verification of the previous response. */
+export function withInternalAnswer(data: InternalAuditData, id: InternalControlId, answer: InternalAnswer): InternalAuditData {
+  const changed = (data.answers?.[id] ?? 'unknown') !== answer;
+  const next: InternalAuditData = {
+    ...data,
+    answers: { ...data.answers, [id]: answer },
+    evidence: changed ? { ...data.evidence, [id]: 'unverified' } : data.evidence,
+  };
+  next.completedAt = isInternalAuditComplete(next) ? (changed ? new Date().toISOString() : data.completedAt ?? new Date().toISOString()) : null;
+  return next;
+}
+
 export function hasAssessedInternalControls(data: InternalAuditData | null): boolean {
   if (!data) return false;
   return INTERNAL_CONTROLS.some((c) => ['yes', 'partial', 'no'].includes(answerOf(data, c.id)));
