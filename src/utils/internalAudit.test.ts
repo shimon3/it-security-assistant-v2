@@ -8,9 +8,27 @@ import {
   isInternalAuditComplete,
   scoreInternalAudit,
   internalAuditCoverage,
+  withInternalAnswer,
 } from './internalAudit';
 
 describe('internal SMB audit scoring', () => {
+  it('invalidates previously verified evidence when the answer changes', () => {
+    const d = emptyInternalAudit();
+    d.answers.mfa = 'yes';
+    d.evidence.mfa = 'verified';
+    const updated = withInternalAnswer(d, 'mfa', 'no');
+    expect(updated.evidence.mfa).toBe('unverified');
+    expect(d.evidence.mfa).toBe('verified');
+    expect(updated.completedAt).toBeNull();
+  });
+
+  it('preserves evidence when the answer is unchanged', () => {
+    const d = emptyInternalAudit();
+    d.answers.mfa = 'yes';
+    d.evidence.mfa = 'verified';
+    expect(withInternalAnswer(d, 'mfa', 'yes').evidence.mfa).toBe('verified');
+  });
+
   it('shows an incomplete scope when only one control is assessed', () => {
     const d = emptyInternalAudit();
     d.answers.mfa = 'yes';
