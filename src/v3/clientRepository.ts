@@ -20,16 +20,18 @@ function validTenantId(tenantId: string): string {
   return tenantId;
 }
 export async function listClients(db: V3ClientDatabase, organizationId: string): Promise<V3Client[]> {
+  const tenantId = validTenantId(organizationId);
   const result = await db.from('clients').select('id,organization_id,name,domain')
-    .eq('organization_id', validTenantId(organizationId)).order('name', { ascending: true });
+    .eq('organization_id', tenantId).order('name', { ascending: true });
   if (result.error || !Array.isArray(result.data)) throw new Error('Unable to load clients.');
   return result.data;
 }
 export async function createClient(db: V3ClientDatabase, organizationId: string, name: string, domain: string): Promise<V3Client> {
   const trimmed = name.trim();
   if (!trimmed || trimmed.length > 160 || domain.length > 255) throw new Error('Invalid client details.');
+  const tenantId = validTenantId(organizationId);
   const result = await db.from('clients').insert({
-    organization_id: validTenantId(organizationId), name: trimmed, domain: domain.trim(),
+    organization_id: tenantId, name: trimmed, domain: domain.trim(),
   }).select('id,organization_id,name,domain').single();
   if (result.error || !result.data) throw new Error('Unable to create client.');
   return result.data;
