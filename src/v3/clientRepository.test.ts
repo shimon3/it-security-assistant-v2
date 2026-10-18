@@ -6,7 +6,7 @@ describe('V3 tenant-scoped client repository', () => {
   it('rejects invalid organization identifiers before database access', async () => {
     const from = vi.fn();
     await expect(listClients({ from } as never, 'not-a-uuid')).rejects.toThrow('Select a valid organization.');
-    expect(from).toHaveBeenCalledOnce();
+    expect(from).not.toHaveBeenCalled();
   });
   it('rejects unsafe client names before insert', async () => {
     await expect(createClient({ from: vi.fn() } as never, org, '   ', '')).rejects.toThrow('Invalid client details.');
