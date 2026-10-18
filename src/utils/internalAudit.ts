@@ -295,6 +295,20 @@ export function emptyInternalAudit(): InternalAuditData {
   };
 }
 
+export function internalAuditCoverage(data: InternalAuditData) {
+  const assessed = INTERNAL_CONTROLS.filter(c => ['yes', 'partial', 'no'].includes(answerOf(data, c.id)));
+  const applicable = INTERNAL_CONTROLS.filter(c => answerOf(data, c.id) !== 'na');
+  const verified = assessed.filter(c => evidenceOf(data, c.id) === 'verified');
+  return {
+    assessed: assessed.length,
+    applicable: applicable.length,
+    verified: verified.length,
+    assessmentPercent: applicable.length ? Math.round(100 * assessed.length / applicable.length) : 0,
+    verifiedPercent: assessed.length ? Math.round(100 * verified.length / assessed.length) : 0,
+    complete: applicable.length > 0 && assessed.length === applicable.length,
+  };
+}
+
 export function hasAssessedInternalControls(data: InternalAuditData | null): boolean {
   if (!data) return false;
   return INTERNAL_CONTROLS.some((c) => ['yes', 'partial', 'no'].includes(answerOf(data, c.id)));
