@@ -6,7 +6,7 @@ import { apiPost, apiErrorOf, errorMessage } from '../utils/apiClient';
 import { updateSession, useAuditSession } from '../utils/auditSession';
 import type { DomainAuditData } from '../utils/domainScore';
 import { isHttpHeadersInconclusive, type HttpHeadersData } from '../utils/httpHeadersScore';
-import { hasAssessedInternalControls, internalAuditCoverage, internalScoreCaps, isInternalAuditComplete, type EvidenceStatus } from '../utils/internalAudit';
+import { INTERNAL_CONTROLS, hasAssessedInternalControls, internalAuditCoverage, internalScoreCaps, isInternalAuditComplete, type EvidenceStatus } from '../utils/internalAudit';
 import { emailPlatformLabelHe, hasClientEnvironment, presenceLabelHe } from '../utils/clientEnvironment';
 import { buildReport, formatDateHe, type Report, type ReportFinding } from '../utils/report';
 import { EFFORT_HE, OWNER_HE, SEVERITY_HE } from '../utils/reportHe';
@@ -239,7 +239,7 @@ function Problem({ r, evidence }: { r: ReportFinding; evidence?: EvidenceStatus 
 
 function ReportDocument({ report, profile }: { report: Report; profile: ConsultantProfile }) {
   const { input, overall, webInconclusive, sections, problems, good, topRisks, thisWeek, remediationPlan } = report;
-  const client = input.clientName.trim() || input.domain;
+  const client = input.clientName.trim() || 'שם העסק לא צוין';
   const internalCaps = input.internalAudit ? internalScoreCaps(input.internalAudit) : [];
   const internalCoverage = input.internalAudit ? internalAuditCoverage(input.internalAudit) : null;
 
@@ -250,7 +250,7 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
       className="print-area mx-auto max-w-[210mm] bg-surface border border-line rounded-xl shadow-sm print:shadow-none print:border-0 print:rounded-none px-8 sm:px-12 py-10 text-[13.5px] leading-relaxed text-ink"
     >
       {/* Professional cover page */}
-      <section className="min-h-[240mm] flex flex-col justify-between print:break-after-page">
+      <section className="min-h-[235mm] flex flex-col justify-between print:break-after-page">
         <div>
           <div className="flex items-center justify-between gap-6">
             <div className="w-16 h-16 rounded-2xl bg-brand text-white flex items-center justify-center text-2xl font-bold" aria-hidden="true">
@@ -259,10 +259,12 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
             <p className="text-sm text-muted">{formatDateHe(input.date)}</p>
           </div>
 
-          <div className="mt-20">
+          <div className="mt-14">
             <p className="text-sm font-semibold text-brand">דוח בדיקת אבטחת מידע</p>
             <h1 className="text-4xl font-bold tracking-tight mt-3">{client}</h1>
-            <p className="text-xl text-ink-2 mt-2" dir="ltr" style={{ textAlign: 'right' }}>{input.domain}</p>
+            {!input.clientName.trim() && <p className="mt-2 text-sm text-amber-800">יש להזין שם לקוח לפני מסירת הדוח.</p>}
+            {input.domain && <p className="text-xl text-ink-2 mt-2" dir="ltr" style={{ textAlign: 'right' }}>{input.domain}</p>}
+            <p className="mt-5 text-sm text-ink-2">תאריך הבדיקה: {formatDateHe(input.date)}</p>
             <div className="mt-8 h-1 w-24 bg-brand rounded-full" />
           </div>
         </div>
@@ -562,19 +564,23 @@ function ReportDocument({ report, profile }: { report: Report; profile: Consulta
             </div>
           )}
           {input.internalAudit && (
-            <div className="break-inside-avoid">
-              <p className="font-sans font-semibold text-ink text-xs mb-1">Internal controls</p>
-              {Object.entries(input.internalAudit.answers).map(([key, value]) => {
-                const observation = input.internalAudit?.observations?.[key as keyof typeof input.internalAudit.observations] ?? '';
-                return (
-                  <div key={key}>
-                    <p>{key}: {value}</p>
-                    <p>  evidence: {input.internalAudit?.evidence?.[key as keyof typeof input.internalAudit.evidence] ?? 'unverified'}</p>
-                    {observation && <p className="whitespace-pre-wrap">  observation: {observation}</p>}
-                  </div>
-                );
-              })}
-              {input.internalAudit.notes && <p className="whitespace-pre-wrap">Notes: {input.internalAudit.notes}</p>}
+            <div className="break-inside-auto">
+              <p className="font-sans font-semibold text-ink text-xs mb-2" dir="rtl">בקרות אבטחה פנימיות</p>
+              <div dir="rtl" className="text-right font-sans space-y-1.5">
+                {INTERNAL_CONTROLS.map(control => {
+                  const answer = input.internalAudit?.answers?.[control.id] ?? 'unknown';
+                  const evidence = input.internalAudit?.evidence?.[control.id] ?? 'unverified';
+                  const observation = input.internalAudit?.observations?.[control.id] ?? '';
+                  const answerHe = { yes: 'כן', partial: 'חלקי', no: 'לא', unknown: 'לא נבדק', na: 'לא רלוונטי' }[answer];
+                  return (
+                    <div key={control.id} className="break-inside-avoid border-b border-line/50 pb-1">
+                      <p><span className="font-semibold">{control.labelHe}</span>: {answerHe} · {evidenceLabelHe(evidence)}</p>
+                      {observation && <p className="whitespace-pre-wrap text-muted">הערה: {observation}</p>}
+                    </div>
+                  );
+                })}
+                {input.internalAudit.notes && <p className="whitespace-pre-wrap">הערות: {input.internalAudit.notes}</p>}
+              </div>
             </div>
           )}
           {input.httpHeaders && (
