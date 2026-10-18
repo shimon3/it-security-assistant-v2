@@ -8,6 +8,7 @@ import {
   emptyInternalAudit,
   hasAssessedInternalControls,
   scoreInternalAudit,
+  internalAuditCoverage,
   internalScoreCaps,
   type InternalAnswer,
   type InternalAuditData,
@@ -42,6 +43,7 @@ export default function InternalAuditPage() {
   const score = assessed ? scoreInternalAudit(data) : null;
   const answered = INTERNAL_CONTROLS.filter((c) => (data.answers?.[c.id] ?? 'unknown') !== 'unknown').length;
   const caps = internalScoreCaps(data);
+  const coverage = internalAuditCoverage(data);
 
   function updateEnvironment(patch: Partial<ClientEnvironment>) {
     updateSession({ clientEnvironment: { ...environment, ...patch } });
@@ -183,6 +185,21 @@ export default function InternalAuditPage() {
               </div>
             )}
           </div>
+          <p className="mt-3 text-sm text-ink-2">
+            {language === 'he' ? 'כיסוי בדיקה' : 'Assessment coverage'}: {coverage.assessed}/{coverage.applicable} ({coverage.assessmentPercent}%)
+            {' · '}
+            {language === 'he' ? 'בקרות מאומתות' : 'Verified controls'}: {coverage.verified}/{coverage.assessed} ({coverage.verifiedPercent}%)
+          </p>
+          {!coverage.complete && <p className="mt-2 text-sm text-amber-800" role="status">
+            {language === 'he'
+              ? 'הבדיקה חלקית: הציון משקף רק בקרות שנענו, ולא את אבטחת הארגון כולו.'
+              : 'Incomplete assessment: the score reflects answered controls only, not the security of the entire organization.'}
+          </p>}
+          {coverage.complete && coverage.verified < coverage.assessed && <p className="mt-2 text-sm text-amber-800" role="status">
+            {language === 'he'
+              ? 'חלק מהתשובות לא אומתו באופן עצמאי. הציון אינו הוכחה לאבטחה.'
+              : 'Some answers have not been independently verified. The score is not proof of security.'}
+          </p>}
           <p className="mt-3 text-xs text-muted">{t('internalAuditPrivacy')}</p>
         </div>
 
