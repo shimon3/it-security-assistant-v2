@@ -12,7 +12,6 @@ import {
   withInternalAnswer,
   internalScoreCaps,
   type InternalAnswer,
-  type InternalAuditData,
   type InternalControlId,
   type EvidenceStatus,
 } from '../utils/internalAudit';
