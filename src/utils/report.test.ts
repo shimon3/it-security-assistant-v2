@@ -112,6 +112,21 @@ describe('buildReport', () => {
     expect(r.overall!.score).toBe(Math.round((r.sections[0].score.score + r.sections[1].score.score) / 2));
   });
 
+  it('does not include an all-N/A internal questionnaire in the overall score', () => {
+    const internalAudit = emptyInternalAudit();
+    for (const key of Object.keys(internalAudit.answers) as Array<keyof typeof internalAudit.answers>) {
+      internalAudit.answers[key] = 'na';
+    }
+    const r = buildReport({
+      ...base,
+      domainAudit: demoDomainAudit(base.domain),
+      httpHeaders: null,
+      internalAudit,
+    })!;
+    expect(r.sections.map(s => s.key)).toEqual(['email']);
+    expect(r.overall!.score).toBe(r.sections[0].score.score);
+  });
+
   it('includes a completed internal questionnaire in the overall score', () => {
     const internalAudit = emptyInternalAudit();
     for (const key of Object.keys(internalAudit.answers) as Array<keyof typeof internalAudit.answers>) {
