@@ -5,11 +5,15 @@
  */
 import type { AuditSession } from '../utils/auditSession';
 
+interface AuditUpdateQuery {
+  eq(column: string, value: string): AuditUpdateQuery;
+  select(columns: string): AuditUpdateQuery;
+  single(): Promise<{ data: SavedAudit | null; error: { message: string } | null }>;
+}
+
 export interface V3SupabaseDataClient {
-  from(table: 'organizations' | 'clients' | 'audit_records'): {
-    select(columns?: string): any;
-    insert(values: Record<string, unknown>): any;
-    update(values: Record<string, unknown>): any;
+  from(table: 'audit_records'): {
+    update(values: Record<string, unknown>): AuditUpdateQuery;
   };
 }
 
