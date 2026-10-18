@@ -9,6 +9,7 @@ import {
   hasAssessedInternalControls,
   scoreInternalAudit,
   internalAuditCoverage,
+  isInternalAuditComplete,
   internalScoreCaps,
   type InternalAnswer,
   type InternalAuditData,
@@ -54,8 +55,7 @@ export default function InternalAuditPage() {
       ...data,
       answers: { ...data.answers, [id]: answer },
     };
-    const allReviewed = INTERNAL_CONTROLS.every((c) => (next.answers?.[c.id] ?? 'unknown') !== 'unknown');
-    next.completedAt = allReviewed ? new Date().toISOString() : null;
+    next.completedAt = isInternalAuditComplete(next) ? new Date().toISOString() : null;
     updateSession({ internalAudit: next });
   }
 
